@@ -45,19 +45,25 @@ export type ProposalData = {
   summaryIntro: string;
   folderLink: string;
   spec: Record<SpecKey, string>;
-  accessories: string;
+  flowType: FlowType;
   towerModel: string;
   revisions: Revision[];
 };
+
+export const FLOW_TYPES = ["Counterflow", "Crossflow"] as const;
+export type FlowType = (typeof FLOW_TYPES)[number];
+
+/** The Technical Proposal revision table has this many rows. */
+export const MAX_REVISIONS = 5;
 
 export function createRevision(rev: string): Revision {
   return {
     rev,
     date: today(),
     status: rev === "0" ? "Initial Bid" : "",
-    preparedBy: "",
-    checkedBy: "",
-    approvedBy: "",
+    preparedBy: "Andre Santos",
+    checkedBy: "Craig Alcorn",
+    approvedBy: "Kenx Wong",
     remarks: "",
   };
 }
@@ -82,14 +88,14 @@ export function createInitialProposal(): ProposalData {
     contactName: "",
     contactEmail: "",
     contactPhone: "",
-    salesmanName: "Craig Alcorn",
-    salesmanEmail: "craig.alcorn@truwater.com.au",
-    salesmanPhone: "0476 202 471",
+    salesmanName: "Andre Santos",
+    salesmanEmail: "andre.santos@truwater.net.au",
+    salesmanPhone: "0420 559 560",
     greeting: "Dear Engineers,",
-    summaryIntro: "Please find my Summary of the ",
+    summaryIntro: "Please find my Summary of the",
     folderLink: "",
     spec: { ...emptySpec },
-    accessories: "",
+    flowType: "Counterflow",
     towerModel: "",
     revisions: [createRevision("0")],
   };
@@ -99,6 +105,14 @@ export function createInitialProposal(): ProposalData {
 export function formatDate(value: string, separator = "/"): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   return match ? [match[3], match[2], match[1]].join(separator) : value;
+}
+
+/** "TTA0149" + "275 Kent St" -> "TTA0149 275 Kent St" (unless the name already starts with the quote number). */
+export function projectTitle(data: Pick<ProposalData, "quoteNumber" | "projectName">): string {
+  const quote = data.quoteNumber.trim();
+  const name = data.projectName.trim();
+  if (!quote || name.toUpperCase().startsWith(quote.toUpperCase())) return name;
+  return [quote, name].filter(Boolean).join(" ");
 }
 
 /** "TTA0146" dated 2026 -> "TTA/0146/2026". */

@@ -8,32 +8,31 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { generateRfq, rfqFileName } from "@/lib/docx/rfq";
-import { downloadBlob } from "@/lib/docx/shared";
-import {
-  generateTechnicalProposal,
-  technicalProposalFileName,
-} from "@/lib/docx/technical-proposal";
 import {
   createInitialProposal,
   createRevision,
+  FLOW_TYPES,
+  MAX_REVISIONS,
   referenceNumber,
   SPEC_ROWS,
   type ProposalData,
   type Revision,
   type SpecKey,
 } from "@/lib/proposal";
+import { DOCUMENTS, generateDocument, type DocumentKind } from "@/lib/templates";
 
-type TextField = Exclude<keyof ProposalData, "spec" | "revisions">;
-
-const DOCUMENTS = {
-  rfq: { generate: generateRfq, fileName: rfqFileName },
-  proposal: { generate: generateTechnicalProposal, fileName: technicalProposalFileName },
-};
-
-type DocumentKind = keyof typeof DOCUMENTS;
+type TextField = Exclude<keyof ProposalData, "spec" | "revisions" | "flowType">;
 
 const ASAP = "ASAP";
+
+function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 const REVISION_FIELDS: { key: keyof Revision; label: string; type?: string }[] = [
   { key: "rev", label: "Rev." },
@@ -87,13 +86,13 @@ export function ProposalForm() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
-    const kind: DocumentKind = submitter?.value === "rfq" ? "rfq" : "proposal";
-    const { generate, fileName } = DOCUMENTS[kind];
+    const kind = (submitter?.value ?? "rfq") as DocumentKind;
 
     setGenerating(kind);
     setError(null);
     try {
-      downloadBlob(await generate(data), fileName(data));
+      const { blob, fileName } = await generateDocument(kind, data);
+      downloadBlob(blob, fileName);
     } catch (err) {
       console.error(err);
       setError("Something went wrong while generating the document. Please try again.");
@@ -110,8 +109,8 @@ export function ProposalForm() {
           <CardDescription>Used by both the RFQ and the Technical Proposal.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
-          {field("projectName", "Project Name", { required: true, placeholder: "Redcliff Hospital" })}
-          {field("quoteNumber", "TTA Quote Number", { required: true, placeholder: "TTA0012" })}
+          {field("quoteNumber", "TTA Quote Number", { required: true, placeholder: "TTA0149" })}
+          {field("projectName", "Project Name", { required: true, placeholder: "275 Kent St" })}
           <div className="grid gap-2 sm:col-span-2">
             <Label htmlFor="projectAddress">Project Address</Label>
             <Textarea
@@ -145,7 +144,7 @@ export function ProposalForm() {
             </div>
           </div>
           <div className="sm:col-span-2">
-            {field("customerDetail", "Customer Detail", { placeholder: "Ford Consulting" })}
+            {field("customerDetail", "Customer Detail", { placeholder: "Climatech NSW Pty Ltd" })}
           </div>
         </CardContent>
       </Card>
@@ -205,29 +204,31 @@ export function ProposalForm() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Accessories</CardTitle>
-          <CardDescription>One accessory per line; each becomes a bullet point.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            aria-label="Accessories"
-            value={data.accessories}
-            onChange={setField("accessories")}
-            rows={5}
-          />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <CardTitle>Technical Proposal cover</CardTitle>
           <CardDescription>
-            The cover also uses the project name, quote number, customer and tower type above.
+            The cover also uses the quote number, project name and customer above.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6">
-          <div className="grid gap-4 sm:grid-cols-2">
-            {field("towerModel", "Tower model", { placeholder: "VXF2220X-1" })}
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-2">
+              <Label>Tower type</Label>
+              <div className="flex gap-2">
+                {FLOW_TYPES.map((flowType) => (
+                  <Button
+                    key={flowType}
+                    type="button"
+                    className="flex-1"
+                    variant={data.flowType === flowType ? "default" : "outline"}
+                    aria-pressed={data.flowType === flowType}
+                    onClick={() => setData((prev) => ({ ...prev, flowType }))}
+                  >
+                    {flowType}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            {field("towerModel", "Model", { placeholder: "ECF1212F4-1B-1" })}
             <div className="grid gap-2">
               <Label>Reference No.</Label>
               <p className="text-muted-foreground flex h-9 items-center text-sm">
@@ -281,10 +282,19 @@ export function ProposalForm() {
                 </tbody>
               </table>
             </div>
-            <div>
-              <Button type="button" variant="outline" size="sm" onClick={addRevision}>
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addRevision}
+                disabled={data.revisions.length >= MAX_REVISIONS}
+              >
                 <Plus /> Add revision
               </Button>
+              <span className="text-muted-foreground text-xs">
+                Up to {MAX_REVISIONS} revisions fit in the table.
+              </span>
             </div>
           </div>
         </CardContent>
@@ -296,14 +306,12 @@ export function ProposalForm() {
         <Button type="button" variant="outline" onClick={() => setData(createInitialProposal())}>
           <RotateCcw /> Reset
         </Button>
-        <Button type="submit" value="rfq" variant="secondary" size="lg" disabled={!!generating}>
-          {generating === "rfq" ? <Loader2 className="animate-spin" /> : <FileDown />}
-          RFQ
-        </Button>
-        <Button type="submit" value="proposal" size="lg" disabled={!!generating}>
-          {generating === "proposal" ? <Loader2 className="animate-spin" /> : <FileDown />}
-          Technical Proposal
-        </Button>
+        {(Object.keys(DOCUMENTS) as DocumentKind[]).map((kind) => (
+          <Button key={kind} type="submit" value={kind} size="lg" disabled={!!generating}>
+            {generating === kind ? <Loader2 className="animate-spin" /> : <FileDown />}
+            {DOCUMENTS[kind].label}
+          </Button>
+        ))}
       </div>
     </form>
   );
