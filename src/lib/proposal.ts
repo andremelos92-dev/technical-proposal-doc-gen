@@ -68,8 +68,11 @@ export function createRevision(rev: string): Revision {
   };
 }
 
+/** Today's date as yyyy-mm-dd in the user's local time zone (not UTC). */
 function today(): string {
-  return new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
 const emptySpec = Object.fromEntries(SPEC_ROWS.map((row) => [row.key, ""])) as Record<
