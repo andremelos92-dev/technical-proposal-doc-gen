@@ -33,6 +33,8 @@ const DOCUMENTS = {
 
 type DocumentKind = keyof typeof DOCUMENTS;
 
+const ASAP = "ASAP";
+
 const REVISION_FIELDS: { key: keyof Revision; label: string; type?: string }[] = [
   { key: "rev", label: "Rev." },
   { key: "date", label: "Date", type: "date" },
@@ -47,6 +49,7 @@ export function ProposalForm() {
   const [data, setData] = useState<ProposalData>(createInitialProposal);
   const [generating, setGenerating] = useState<DocumentKind | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const isAsap = data.dateQuoteRequired === ASAP;
 
   const setField = (field: TextField) => (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -119,7 +122,28 @@ export function ProposalForm() {
             />
           </div>
           {field("date", "Date", { type: "date" })}
-          {field("dateQuoteRequired", "Date Quote Required", { type: "date" })}
+          <div className="grid gap-2">
+            <Label htmlFor="dateQuoteRequired">Date Quote Required</Label>
+            <div className="flex gap-2">
+              <Input
+                id="dateQuoteRequired"
+                type="date"
+                value={isAsap ? "" : data.dateQuoteRequired}
+                onChange={setField("dateQuoteRequired")}
+                disabled={isAsap}
+              />
+              <Button
+                type="button"
+                variant={isAsap ? "default" : "outline"}
+                aria-pressed={isAsap}
+                onClick={() =>
+                  setData((prev) => ({ ...prev, dateQuoteRequired: isAsap ? "" : ASAP }))
+                }
+              >
+                ASAP
+              </Button>
+            </div>
+          </div>
           <div className="sm:col-span-2">
             {field("customerDetail", "Customer Detail", { placeholder: "Ford Consulting" })}
           </div>

@@ -33,7 +33,7 @@ export type ProposalData = {
   projectAddress: string;
   quoteNumber: string;
   date: string; // yyyy-mm-dd (from <input type="date">)
-  dateQuoteRequired: string;
+  dateQuoteRequired: string; // yyyy-mm-dd, or "ASAP"
   customerDetail: string;
   contactName: string;
   contactEmail: string;
