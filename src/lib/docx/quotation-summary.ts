@@ -1,66 +1,41 @@
 import {
   AlignmentType,
-  BorderStyle,
   Document,
   ExternalHyperlink,
   Footer,
   Header,
-  ImageRun,
   Packer,
   PageOrientation,
   Paragraph,
   Table,
-  TableCell,
   TableLayoutType,
   TableRow,
   TabStopType,
   TextRun,
-  VerticalAlign,
   WidthType,
 } from "docx";
 
+import {
+  A4_HEIGHT,
+  A4_WIDTH,
+  cell,
+  FONT,
+  LOGO_URL,
+  loadImage,
+  logoParagraph,
+  runs,
+  safeFileName,
+  TEXT_SIZE,
+} from "@/lib/docx/shared";
 import { formatDate, SPEC_ROWS, type ProposalData } from "@/lib/proposal";
 
-const FONT = "Arial";
-const TEXT_SIZE = 18; // half-points -> 9pt
-const LOGO_URL = "/truwater-logo.png";
-const LOGO_HEIGHT_PX = 40;
-
 // A4 landscape with 1000 twip (~1.76cm) margins.
-const PAGE_WIDTH = 16838;
-const PAGE_HEIGHT = 11906;
+const PAGE_WIDTH = A4_HEIGHT;
 const MARGIN = 1000;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
 
 const DETAILS_COLUMNS = [2600, 4080, 4080, CONTENT_WIDTH - 2600 - 4080 * 2];
 const SPEC_COLUMNS = [2800, 900, CONTENT_WIDTH - 2800 - 900];
-
-const BORDER = { style: BorderStyle.SINGLE, size: 4, color: "000000" };
-const BORDERS = { top: BORDER, bottom: BORDER, left: BORDER, right: BORDER };
-
-type CellOptions = {
-  bold?: boolean;
-  columnSpan?: number;
-  align?: (typeof AlignmentType)[keyof typeof AlignmentType];
-};
-
-/** Turns a (possibly multi-line) string into runs separated by line breaks. */
-function runs(value: string, bold = false, size = TEXT_SIZE): TextRun[] {
-  return value.split(/\r?\n/).map(
-    (line, index) => new TextRun({ text: line, font: FONT, size, bold, break: index > 0 ? 1 : 0 })
-  );
-}
-
-function cell(value: string, width: number, options: CellOptions = {}): TableCell {
-  return new TableCell({
-    width: { size: width, type: WidthType.DXA },
-    columnSpan: options.columnSpan,
-    borders: BORDERS,
-    verticalAlign: VerticalAlign.CENTER,
-    margins: { left: 100, right: 100, top: 20, bottom: 20 },
-    children: [new Paragraph({ alignment: options.align, children: runs(value, options.bold) })],
-  });
-}
 
 function table(columnWidths: number[], rows: TableRow[]): Table {
   return new Table({
@@ -76,7 +51,7 @@ function spacer(): Paragraph {
 }
 
 function textParagraph(value: string): Paragraph {
-  return new Paragraph({ spacing: { after: 200 }, children: runs(value, false, 20) });
+  return new Paragraph({ spacing: { after: 200 }, children: runs(value, { size: 20 }) });
 }
 
 function detailsTable(data: ProposalData): Table {
@@ -154,48 +129,6 @@ function accessoriesParagraphs(accessories: string): Paragraph[] {
   return [heading, ...items];
 }
 
-/** Reads width/height from a PNG's IHDR chunk so the logo keeps its aspect ratio. */
-function pngSize(buffer: ArrayBuffer): { width: number; height: number } {
-  const view = new DataView(buffer);
-  return { width: view.getUint32(16), height: view.getUint32(20) };
-}
-
-async function loadLogo(): Promise<ArrayBuffer | null> {
-  try {
-    const response = await fetch(LOGO_URL);
-    if (!response.ok || !response.headers.get("content-type")?.includes("image/png")) return null;
-    return await response.arrayBuffer();
-  } catch {
-    return null;
-  }
-}
-
-function logoParagraph(logo: ArrayBuffer | null): Paragraph {
-  if (!logo) {
-    return new Paragraph({
-      alignment: AlignmentType.RIGHT,
-      children: [
-        new TextRun({ text: "TRUWATER", font: FONT, size: 40, bold: true, color: "1E9AD6" }),
-      ],
-    });
-  }
-
-  const { width, height } = pngSize(logo);
-  return new Paragraph({
-    alignment: AlignmentType.RIGHT,
-    children: [
-      new ImageRun({
-        type: "png",
-        data: logo,
-        transformation: {
-          width: Math.round((width / height) * LOGO_HEIGHT_PX),
-          height: LOGO_HEIGHT_PX,
-        },
-      }),
-    ],
-  });
-}
-
 function footerParagraphs(data: ProposalData): Paragraph[] {
   const grey = { font: FONT, size: 16, color: "7F7F7F" };
   return [
@@ -219,8 +152,8 @@ function footerParagraphs(data: ProposalData): Paragraph[] {
   ];
 }
 
-export async function generateProposalDocx(data: ProposalData): Promise<Blob> {
-  const logo = await loadLogo();
+export async function generateQuotationSummary(data: ProposalData): Promise<Blob> {
+  const logo = await loadImage(LOGO_URL);
 
   const document = new Document({
     creator: data.salesmanName || "Truwater",
@@ -231,11 +164,11 @@ export async function generateProposalDocx(data: ProposalData): Promise<Blob> {
         properties: {
           page: {
             // docx swaps width/height itself when the orientation is landscape.
-            size: { width: PAGE_HEIGHT, height: PAGE_WIDTH, orientation: PageOrientation.LANDSCAPE },
+            size: { width: A4_WIDTH, height: A4_HEIGHT, orientation: PageOrientation.LANDSCAPE },
             margin: { top: MARGIN, bottom: MARGIN, left: MARGIN, right: MARGIN, header: 400, footer: 400 },
           },
         },
-        headers: { default: new Header({ children: [logoParagraph(logo)] }) },
+        headers: { default: new Header({ children: [logoParagraph(logo, 40)] }) },
         footers: { default: new Footer({ children: footerParagraphs(data) }) },
         children: [
           new Paragraph({
@@ -260,9 +193,6 @@ export async function generateProposalDocx(data: ProposalData): Promise<Blob> {
   return Packer.toBlob(document);
 }
 
-export function proposalFileName(data: ProposalData): string {
-  const base = [data.quoteNumber, data.projectName, "Quotation Project Summary"]
-    .filter((part) => part.trim())
-    .join(" - ");
-  return `${base.replace(/[\\/:*?"<>|]/g, "").trim()}.docx`;
+export function quotationSummaryFileName(data: ProposalData): string {
+  return safeFileName([data.quoteNumber, data.projectName], "Quotation Project Summary");
 }

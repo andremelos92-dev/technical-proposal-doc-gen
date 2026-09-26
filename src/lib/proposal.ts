@@ -18,6 +18,16 @@ export const SPEC_ROWS = [
 
 export type SpecKey = (typeof SPEC_ROWS)[number]["key"];
 
+export type Revision = {
+  rev: string;
+  date: string; // yyyy-mm-dd
+  status: string;
+  preparedBy: string;
+  checkedBy: string;
+  approvedBy: string;
+  remarks: string;
+};
+
 export type ProposalData = {
   projectName: string;
   projectAddress: string;
@@ -36,7 +46,25 @@ export type ProposalData = {
   folderLink: string;
   spec: Record<SpecKey, string>;
   accessories: string;
+  towerModel: string;
+  revisions: Revision[];
 };
+
+export function createRevision(rev: string): Revision {
+  return {
+    rev,
+    date: today(),
+    status: rev === "0" ? "Initial Bid" : "",
+    preparedBy: "",
+    checkedBy: "",
+    approvedBy: "",
+    remarks: "",
+  };
+}
+
+function today(): string {
+  return new Date().toISOString().slice(0, 10);
+}
 
 const emptySpec = Object.fromEntries(SPEC_ROWS.map((row) => [row.key, ""])) as Record<
   SpecKey,
@@ -48,7 +76,7 @@ export function createInitialProposal(): ProposalData {
     projectName: "",
     projectAddress: "",
     quoteNumber: "TTA00",
-    date: new Date().toISOString().slice(0, 10),
+    date: today(),
     dateQuoteRequired: "",
     customerDetail: "",
     contactName: "",
@@ -62,11 +90,20 @@ export function createInitialProposal(): ProposalData {
     folderLink: "",
     spec: { ...emptySpec },
     accessories: "",
+    towerModel: "",
+    revisions: [createRevision("0")],
   };
 }
 
-/** "2026-09-26" -> "26/09/2026" (Australian format). */
-export function formatDate(value: string): string {
+/** "2026-09-26" -> "26/09/2026" (Australian format), or "26.09.2026" with separator ".". */
+export function formatDate(value: string, separator = "/"): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  return match ? `${match[3]}/${match[2]}/${match[1]}` : value;
+  return match ? [match[3], match[2], match[1]].join(separator) : value;
+}
+
+/** "TTA0146" dated 2026 -> "TTA/0146/2026". */
+export function referenceNumber(data: Pick<ProposalData, "quoteNumber" | "date">): string {
+  const year = /^\d{4}/.exec(data.date)?.[0] ?? String(new Date().getFullYear());
+  const match = /^([A-Za-z]+)\s*(\d+)$/.exec(data.quoteNumber.trim());
+  return match ? `${match[1].toUpperCase()}/${match[2]}/${year}` : data.quoteNumber;
 }

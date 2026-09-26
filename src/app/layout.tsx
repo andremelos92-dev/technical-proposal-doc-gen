@@ -6,8 +6,9 @@ import "./globals.css";
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Quotation Project Summary Generator",
-  description: "Fill in the project details and download the Truwater quotation summary as a Word document.",
+  title: "Truwater Document Generator",
+  description:
+    "Fill in the project details and download the Truwater quotation summary or technical proposal as a Word document.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
