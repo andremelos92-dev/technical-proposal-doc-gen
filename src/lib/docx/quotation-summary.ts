@@ -1,10 +1,8 @@
 import {
   AlignmentType,
-  Document,
   ExternalHyperlink,
   Footer,
   Header,
-  Packer,
   PageOrientation,
   Paragraph,
   Table,
@@ -13,6 +11,7 @@ import {
   TabStopType,
   TextRun,
   WidthType,
+  type ISectionOptions,
 } from "docx";
 
 import {
@@ -20,12 +19,9 @@ import {
   A4_WIDTH,
   cell,
   FONT,
-  LOGO_URL,
-  loadImage,
   logoParagraph,
   runs,
-  safeFileName,
-  TEXT_SIZE,
+  type LoadedImage,
 } from "@/lib/docx/shared";
 import { formatDate, SPEC_ROWS, type ProposalData } from "@/lib/proposal";
 
@@ -152,47 +148,33 @@ function footerParagraphs(data: ProposalData): Paragraph[] {
   ];
 }
 
-export async function generateQuotationSummary(data: ProposalData): Promise<Blob> {
-  const logo = await loadImage(LOGO_URL);
-
-  const document = new Document({
-    creator: data.salesmanName || "Truwater",
-    title: `Quotation Project Summary ${data.quoteNumber}`,
-    styles: { default: { document: { run: { font: FONT, size: TEXT_SIZE } } } },
-    sections: [
-      {
-        properties: {
-          page: {
-            // docx swaps width/height itself when the orientation is landscape.
-            size: { width: A4_WIDTH, height: A4_HEIGHT, orientation: PageOrientation.LANDSCAPE },
-            margin: { top: MARGIN, bottom: MARGIN, left: MARGIN, right: MARGIN, header: 400, footer: 400 },
-          },
-        },
-        headers: { default: new Header({ children: [logoParagraph(logo, 40)] }) },
-        footers: { default: new Footer({ children: footerParagraphs(data) }) },
-        children: [
-          new Paragraph({
-            spacing: { after: 240 },
-            children: [
-              new TextRun({ text: `Quotation Project Summary ${data.quoteNumber}`, font: FONT, size: 32, bold: true }),
-            ],
-          }),
-          detailsTable(data),
-          spacer(),
-          spacer(),
-          textParagraph(data.greeting),
-          textParagraph(data.summaryIntro),
-          folderLinkParagraph(data.folderLink),
-          specTable(data),
-          ...accessoriesParagraphs(data.accessories),
-        ],
+/** The Quotation Project Summary page, as an A4 landscape section of the proposal. */
+export function quotationSummarySection(data: ProposalData, logo: LoadedImage | null): ISectionOptions {
+  return {
+    properties: {
+      page: {
+        // docx swaps width/height itself when the orientation is landscape.
+        size: { width: A4_WIDTH, height: A4_HEIGHT, orientation: PageOrientation.LANDSCAPE },
+        margin: { top: MARGIN, bottom: MARGIN, left: MARGIN, right: MARGIN, header: 400, footer: 400 },
       },
+    },
+    headers: { default: new Header({ children: [logoParagraph(logo, 40)] }) },
+    footers: { default: new Footer({ children: footerParagraphs(data) }) },
+    children: [
+      new Paragraph({
+        spacing: { after: 240 },
+        children: [
+          new TextRun({ text: `Quotation Project Summary ${data.quoteNumber}`, font: FONT, size: 32, bold: true }),
+        ],
+      }),
+      detailsTable(data),
+      spacer(),
+      spacer(),
+      textParagraph(data.greeting),
+      textParagraph(data.summaryIntro),
+      folderLinkParagraph(data.folderLink),
+      specTable(data),
+      ...accessoriesParagraphs(data.accessories),
     ],
-  });
-
-  return Packer.toBlob(document);
-}
-
-export function quotationSummaryFileName(data: ProposalData): string {
-  return safeFileName([data.quoteNumber, data.projectName], "Quotation Project Summary");
+  };
 }

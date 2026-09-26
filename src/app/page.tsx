@@ -6,8 +6,8 @@ export default function Home() {
       <header className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Truwater Document Generator</h1>
         <p className="text-muted-foreground mt-2">
-          Fill in the fields below and generate the quotation summary or the technical proposal as
-          a Word (.docx) document.
+          Fill in the fields below and generate the technical proposal (cover page and quotation
+          summary) as a Word (.docx) document.
         </p>
       </header>
       <ProposalForm />

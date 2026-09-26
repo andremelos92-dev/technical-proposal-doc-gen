@@ -8,7 +8,7 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Truwater Document Generator",
   description:
-    "Fill in the project details and download the Truwater quotation summary or technical proposal as a Word document.",
+    "Fill in the project details and download the Truwater technical proposal as a Word document.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
