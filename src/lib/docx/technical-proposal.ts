@@ -23,9 +23,7 @@ import {
   safeFileName,
   TEXT_SIZE,
   type LoadedImage,
-} from "@/lib/docx/shared";
-import { quotationSummarySection } from "@/lib/docx/quotation-summary";
-import { formatDate, referenceNumber, type ProposalData, type Revision } from "@/lib/proposal";
+} from "@/lib/docx/shared";import { formatDate, referenceNumber, type ProposalData, type Revision } from "@/lib/proposal";
 
 const COVER_IMAGE_URLS = ["/proposal-cover.png", "/proposal-cover.jpg"];
 const COVER_IMAGE_WIDTH_PX = 400;
@@ -131,7 +129,6 @@ export async function generateTechnicalProposal(data: ProposalData): Promise<Blo
     title: `Cooling Tower Technical Proposal ${data.quoteNumber}`,
     styles: { default: { document: { run: { font: FONT, size: TEXT_SIZE } } } },
     sections: [
-      // Page 1: portrait cover, no header/footer.
       {
         properties: {
           page: {
@@ -141,8 +138,6 @@ export async function generateTechnicalProposal(data: ProposalData): Promise<Blo
         },
         children: coverPage(data, logo, coverImage),
       },
-      // Page 2: landscape quotation summary with its own header/footer.
-      quotationSummarySection(data, logo),
     ],
   });
 
