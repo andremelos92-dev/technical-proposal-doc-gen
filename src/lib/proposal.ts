@@ -81,7 +81,7 @@ export function createInitialProposal(): ProposalData {
   return {
     projectName: "",
     projectAddress: "",
-    quoteNumber: "TTA00",
+    quoteNumber: "",
     date: today(),
     dateQuoteRequired: "",
     customerDetail: "",
