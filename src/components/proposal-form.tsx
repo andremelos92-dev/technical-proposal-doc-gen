@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   createInitialProposal,
   createRevision,
@@ -214,23 +213,22 @@ export function ProposalForm() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
+      <Card className="gap-4 py-5">
+        <CardHeader className="flex items-center gap-2">
           <CardTitle>Message</CardTitle>
-          <CardDescription>RFQ only.</CardDescription>
+          <span className="text-muted-foreground rounded-full border px-2 py-0.5 text-xs font-medium">
+            RFQ only
+          </span>
         </CardHeader>
-        <CardContent className="grid gap-4">
-          {field("greeting", "Greeting")}
-          <div className="grid gap-2">
-            <Label htmlFor="summaryIntro">Summary</Label>
-            <Textarea
-              id="summaryIntro"
-              value={data.summaryIntro}
-              onChange={setField("summaryIntro")}
-              rows={3}
-            />
-          </div>
-          {field("folderLink", "Link to folder", { type: "url", placeholder: "https://…" })}
+        <CardContent className="grid gap-3 sm:grid-cols-12">
+          {field("greeting", "Greeting", {}, "sm:col-span-3")}
+          {field("summaryIntro", "Summary", {}, "sm:col-span-4")}
+          {field(
+            "folderLink",
+            "Link to folder",
+            { type: "url", placeholder: "Optional – paste folder link" },
+            "sm:col-span-5"
+          )}
         </CardContent>
       </Card>
 
