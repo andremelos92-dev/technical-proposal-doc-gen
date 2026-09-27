@@ -225,23 +225,38 @@ export function ProposalForm() {
           {field("summaryIntro", "Summary", {}, "sm:col-span-4")}
           {field(
             "folderLink",
-            "Link to folder",
+            "Link To Folder",
             { type: "url", placeholder: "Optional – paste folder link" },
             "sm:col-span-5"
           )}
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="gap-4 py-5">
         <CardHeader>
-          <CardTitle>Cooling tower specification</CardTitle>
+          <CardTitle>Cooling Tower Specification</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-2">
+        {/* Fills down the left column first, so the order matches the RFQ table. */}
+        <CardContent className="grid gap-x-8 gap-y-2 sm:grid-flow-col sm:grid-cols-2 sm:grid-rows-8">
           {SPEC_ROWS.map((row) => (
-            <div key={row.key} className="grid grid-cols-[1fr_3.5rem_2fr] items-center gap-3">
+            <div
+              key={row.key}
+              className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] items-center gap-3"
+            >
               <Label htmlFor={row.key}>{row.label}</Label>
-              <span className="text-muted-foreground text-center text-sm">{row.unit}</span>
-              <Input id={row.key} value={data.spec[row.key]} onChange={setSpec(row.key)} />
+              <div className="relative">
+                <Input
+                  id={row.key}
+                  value={data.spec[row.key]}
+                  onChange={setSpec(row.key)}
+                  className={row.unit ? "pr-11" : undefined}
+                />
+                {row.unit && (
+                  <span className="text-muted-foreground pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs">
+                    {row.unit}
+                  </span>
+                )}
+              </div>
             </div>
           ))}
         </CardContent>
@@ -249,7 +264,7 @@ export function ProposalForm() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Technical Proposal cover</CardTitle>
+          <CardTitle>Technical Proposal Cover</CardTitle>
           <CardDescription>
             The cover also uses the quote number, project name and customer above.
           </CardDescription>
@@ -257,7 +272,7 @@ export function ProposalForm() {
         <CardContent className="grid gap-6">
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="grid gap-2">
-              <Label>Tower type</Label>
+              <Label>Tower Type</Label>
               <div className="flex gap-2">
                 {FLOW_TYPES.map((flowType) => (
                   <Button
@@ -335,7 +350,7 @@ export function ProposalForm() {
                 onClick={addRevision}
                 disabled={data.revisions.length >= MAX_REVISIONS}
               >
-                <Plus /> Add revision
+                <Plus /> Add Revision
               </Button>
               <span className="text-muted-foreground text-xs">
                 Up to {MAX_REVISIONS} revisions fit in the table.
