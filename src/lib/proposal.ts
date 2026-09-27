@@ -95,7 +95,7 @@ export function createInitialProposal(): ProposalData {
     salesmanEmail: "andre.santos@truwater.net.au",
     salesmanPhone: "0420 559 560",
     greeting: "Dear Engineers,",
-    summaryIntro: "Please find my Summary of the",
+    summaryIntro: "Please find my Summary",
     folderLink: "",
     spec: { ...emptySpec },
     flowType: "Counterflow",
