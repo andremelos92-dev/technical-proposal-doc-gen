@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
 import {
   createInitialProposal,
   createRevision,
@@ -15,6 +16,7 @@ import {
   PARTNERS,
   proposalRecipient,
   referenceNumber,
+  REVISION_PEOPLE,
   SPEC_ROWS,
   type ProposalData,
   type Recipient,
@@ -65,13 +67,25 @@ const CONTACT_ROWS: {
   },
 ];
 
-const REVISION_FIELDS:{ key: keyof Revision; label: string; type?: string }[] = [
-  { key: "rev", label: "Rev." },
-  { key: "date", label: "Date", type: "date" },
-  { key: "status", label: "Status" },
-  { key: "preparedBy", label: "Prepared By" },
-  { key: "checkedBy", label: "Checked By" },
-  { key: "approvedBy", label: "Approved By" },
+type PersonColumn = keyof typeof REVISION_PEOPLE;
+
+function isPersonColumn(key: keyof Revision): key is PersonColumn {
+  return key in REVISION_PEOPLE;
+}
+
+/** The names offered for a sign-off column, keeping any other name already entered. */
+function personOptions(column: PersonColumn, current: string): readonly string[] {
+  const names: readonly string[] = REVISION_PEOPLE[column];
+  return current && !names.includes(current) ? [...names, current] : names;
+}
+
+const REVISION_FIELDS: { key: keyof Revision; label: string; type?: string; width?: string }[] = [
+  { key: "rev", label: "Rev.", width: "w-14" },
+  { key: "date", label: "Date", type: "date", width: "w-38" },
+  { key: "status", label: "Status", width: "w-28" },
+  { key: "preparedBy", label: "Prepared By", width: "w-36" },
+  { key: "checkedBy", label: "Checked By", width: "w-36" },
+  { key: "approvedBy", label: "Approved By", width: "w-36" },
   { key: "remarks", label: "Remarks" },
 ];
 
@@ -89,7 +103,7 @@ export function ProposalForm() {
     setData((prev) => ({ ...prev, spec: { ...prev.spec, [key]: event.target.value } }));
 
   const setRevision = (index: number, key: keyof Revision) => (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) =>
     setData((prev) => ({
       ...prev,
@@ -350,11 +364,11 @@ export function ProposalForm() {
           <div className="grid gap-2">
             <Label>Revisions</Label>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] border-separate border-spacing-1 text-sm">
+              <table className="w-full min-w-[880px] table-fixed border-separate border-spacing-1 text-sm">
                 <thead>
                   <tr className="text-muted-foreground text-left">
                     {REVISION_FIELDS.map((column) => (
-                      <th key={column.key} className="font-medium">
+                      <th key={column.key} className={cn("font-medium", column.width)}>
                         {column.label}
                       </th>
                     ))}
@@ -367,13 +381,28 @@ export function ProposalForm() {
                   {data.revisions.map((revision, index) => (
                     <tr key={index}>
                       {REVISION_FIELDS.map((column) => (
-                        <td key={column.key} className={column.key === "rev" ? "w-16" : undefined}>
-                          <Input
-                            aria-label={`${column.label} (row ${index + 1})`}
-                            type={column.type}
-                            value={revision[column.key]}
-                            onChange={setRevision(index, column.key)}
-                          />
+                        <td key={column.key}>
+                          {isPersonColumn(column.key) ? (
+                            <NativeSelect
+                              aria-label={`${column.label} (row ${index + 1})`}
+                              value={revision[column.key]}
+                              onChange={setRevision(index, column.key)}
+                            >
+                              <option value="">–</option>
+                              {personOptions(column.key, revision[column.key]).map((name) => (
+                                <option key={name} value={name}>
+                                  {name}
+                                </option>
+                              ))}
+                            </NativeSelect>
+                          ) : (
+                            <Input
+                              aria-label={`${column.label} (row ${index + 1})`}
+                              type={column.type}
+                              value={revision[column.key]}
+                              onChange={setRevision(index, column.key)}
+                            />
+                          )}
                         </td>
                       ))}
                       <td>

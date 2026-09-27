@@ -70,6 +70,13 @@ export type FlowType = (typeof FLOW_TYPES)[number];
 /** The Technical Proposal revision table has this many rows. */
 export const MAX_REVISIONS = 5;
 
+/** Names offered in the revision table's sign-off columns. Add a name here to offer it. */
+export const REVISION_PEOPLE = {
+  preparedBy: ["Andre Santos", "Craig Alcorn"],
+  checkedBy: ["Craig Alcorn", "Kenx Wong"],
+  approvedBy: ["Kenx Wong", "WK How"],
+} as const satisfies Partial<Record<keyof Revision, readonly string[]>>;
+
 export function createRevision(rev: string): Revision {
   return {
     rev,
