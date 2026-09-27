@@ -47,8 +47,22 @@ export type ProposalData = {
   spec: Record<SpecKey, string>;
   flowType: FlowType;
   towerModel: string;
+  recipient: Recipient;
+  otherRecipient: string;
   revisions: Revision[];
 };
+
+/**
+ * Companies a Technical Proposal can be addressed to instead of the end customer.
+ * Add a region here (e.g. Victoria, Darwin) and it appears as an option on the form.
+ */
+export const PARTNERS = [
+  { id: "sydney", region: "Sydney", name: "Complete Cooling Towers Service and Spares Pty Ltd" },
+  { id: "queensland", region: "Queensland", name: "Cooling Tower Solutions" },
+] as const;
+
+/** "customer" copies Customer Detail, "other" uses the typed name, otherwise a partner id. */
+export type Recipient = "customer" | "other" | (typeof PARTNERS)[number]["id"];
 
 export const FLOW_TYPES = ["Counterflow", "Crossflow"] as const;
 export type FlowType = (typeof FLOW_TYPES)[number];
@@ -100,6 +114,8 @@ export function createInitialProposal(): ProposalData {
     spec: { ...emptySpec },
     flowType: "Counterflow",
     towerModel: "",
+    recipient: "customer",
+    otherRecipient: "",
     revisions: [createRevision("0")],
   };
 }
@@ -116,6 +132,15 @@ export function projectTitle(data: Pick<ProposalData, "quoteNumber" | "projectNa
   const name = data.projectName.trim();
   if (!quote || name.toUpperCase().startsWith(quote.toUpperCase())) return name;
   return [quote, name].filter(Boolean).join(" ");
+}
+
+/** The company name printed on the Technical Proposal cover. */
+export function proposalRecipient(
+  data: Pick<ProposalData, "recipient" | "otherRecipient" | "customerDetail">
+): string {
+  if (data.recipient === "customer") return data.customerDetail.trim();
+  if (data.recipient === "other") return data.otherRecipient.trim();
+  return PARTNERS.find((partner) => partner.id === data.recipient)?.name ?? "";
 }
 
 /** "TTA0146" dated 2026 -> "TTA/0146/2026". */

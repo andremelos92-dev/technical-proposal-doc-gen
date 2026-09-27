@@ -5,6 +5,7 @@ import {
   formatDate,
   MAX_REVISIONS,
   projectTitle,
+  proposalRecipient,
   referenceNumber,
   SPEC_ROWS,
   type ProposalData,
@@ -60,7 +61,8 @@ function revisionValues(revisions: Revision[]): TemplateValues {
 function technicalProposalValues(data: ProposalData): TemplateValues {
   return {
     projectTitle: projectTitle(data),
-    customerDetail: data.customerDetail,
+    // The cover is addressed to the chosen recipient (customer, regional partner or other).
+    customerDetail: proposalRecipient(data),
     modelLine: [`${data.flowType} Model`, data.towerModel.trim()].filter(Boolean).join(" - "),
     referenceNumber: referenceNumber(data),
     ...revisionValues(data.revisions),

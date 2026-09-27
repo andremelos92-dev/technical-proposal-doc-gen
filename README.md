@@ -28,6 +28,18 @@ Open http://localhost:3000, fill in the form and click **RFQ** or **Technical Pr
 To change a layout, open the template in Word, edit it, and keep the `{placeholders}` where the values go.
 Whatever formatting a placeholder has (font, size, bold, colour) is what the filled value gets.
 
+### Adding a regional partner
+
+The Technical Proposal cover can be addressed to the customer, a regional partner or any other name
+("Addressed To" on the form). The RFQ always keeps the customer. To add a region (e.g. Victoria,
+Darwin), add one line to `PARTNERS` in `src/lib/proposal.ts`:
+
+```ts
+{ id: "victoria", region: "Victoria", name: "Company Name Pty Ltd" },
+```
+
+A button for it appears automatically on the form.
+
 ### Adding a new document
 
 1. Save the Word file into `public/templates/`, typing `{placeholders}` where the form values should go.

@@ -12,16 +12,25 @@ import {
   createRevision,
   FLOW_TYPES,
   MAX_REVISIONS,
+  PARTNERS,
+  proposalRecipient,
   referenceNumber,
   SPEC_ROWS,
   type ProposalData,
+  type Recipient,
   type Revision,
   type SpecKey,
 } from "@/lib/proposal";
 import { DOCUMENTS, generateDocument, type DocumentKind } from "@/lib/templates";
 import { cn } from "@/lib/utils";
 
-type TextField = Exclude<keyof ProposalData, "spec" | "revisions" | "flowType">;
+type TextField = Exclude<keyof ProposalData, "spec" | "revisions" | "flowType" | "recipient">;
+
+const RECIPIENT_OPTIONS: { value: Recipient; label: string }[] = [
+  { value: "customer", label: "Customer" },
+  ...PARTNERS.map((partner) => ({ value: partner.id, label: partner.region })),
+  { value: "other", label: "Other" },
+];
 
 const ASAP = "ASAP";
 
@@ -266,10 +275,47 @@ export function ProposalForm() {
         <CardHeader>
           <CardTitle>Technical Proposal Cover</CardTitle>
           <CardDescription>
-            The cover also uses the quote number, project name and customer above.
+            The cover also uses the quote number and project name above.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6">
+          <div className="grid gap-2">
+            <Label>Addressed To</Label>
+            <div className="flex flex-wrap gap-2">
+              {RECIPIENT_OPTIONS.map((option) => (
+                <Button
+                  key={option.value}
+                  type="button"
+                  size="sm"
+                  variant={data.recipient === option.value ? "default" : "outline"}
+                  aria-pressed={data.recipient === option.value}
+                  onClick={() => setData((prev) => ({ ...prev, recipient: option.value }))}
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+            {data.recipient === "other" && (
+              <Input
+                aria-label="Other recipient"
+                placeholder="Type the company name for the cover"
+                value={data.otherRecipient}
+                onChange={setField("otherRecipient")}
+                className="sm:max-w-md"
+              />
+            )}
+            <p className="text-muted-foreground text-sm">
+              Printed on cover:{" "}
+              {proposalRecipient(data) ? (
+                <span className="text-foreground font-medium">{proposalRecipient(data)}</span>
+              ) : data.recipient === "customer" ? (
+                "fill in Customer Detail above"
+              ) : (
+                "type a company name"
+              )}
+            </p>
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="grid gap-2">
               <Label>Tower Type</Label>
@@ -291,8 +337,12 @@ export function ProposalForm() {
             {field("towerModel", "Model", { placeholder: "ECF1212F4-1B-1" })}
             <div className="grid gap-2">
               <Label>Reference No.</Label>
-              <p className="text-muted-foreground flex h-9 items-center text-sm">
-                {referenceNumber(data)}
+              <p className="flex h-9 items-center text-sm">
+                {referenceNumber(data) ? (
+                  <span className="font-medium">{referenceNumber(data)}</span>
+                ) : (
+                  <span className="text-muted-foreground">Fills in from the TTA Quote Number</span>
+                )}
               </p>
             </div>
           </div>
