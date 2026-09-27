@@ -16,7 +16,14 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000, fill in the form and click **RFQ** or **Technical Proposal**.
+Open http://localhost:3000. The sidebar has:
+
+- **Dashboard** (`/`): quick links to start a document and, later, recent documents
+- **Documents** (`/documents`): the form; click **RFQ** or **Technical Proposal** to download
+- **History** (`/history`): placeholder for saved and uploaded documents (coming soon)
+- **Account**: reserved for login (coming soon)
+
+Sidebar items are listed in `NAV_ITEMS` in `src/components/app-shell.tsx`.
 
 ## Templates
 
@@ -52,5 +59,6 @@ A download button for it appears automatically at the bottom of the form.
 
 - `src/lib/proposal.ts`: form fields, default values, spec rows, reference number
 - `src/lib/templates.ts`: document registry and template filling
+- `src/components/app-shell.tsx`: sidebar navigation
 - `src/components/proposal-form.tsx`: the form UI
 - `src/components/ui/*`: shadcn/ui components
