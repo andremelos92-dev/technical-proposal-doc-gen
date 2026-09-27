@@ -241,7 +241,7 @@ export function ProposalForm() {
           {SPEC_ROWS.map((row) => (
             <div
               key={row.key}
-              className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] items-center gap-3"
+              className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] items-center gap-3 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]"
             >
               <Label htmlFor={row.key} className="block leading-snug">
                 {row.label}
@@ -251,7 +251,12 @@ export function ProposalForm() {
                   </span>
                 )}
               </Label>
-              <Input id={row.key} value={data.spec[row.key]} onChange={setSpec(row.key)} />
+              <Input
+                id={row.key}
+                value={data.spec[row.key]}
+                onChange={setSpec(row.key)}
+                placeholder={row.example}
+              />
             </div>
           ))}
         </CardContent>
