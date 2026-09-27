@@ -1,4 +1,4 @@
-# Technical Proposal Doc Gen
+# Truwater Document Generator
 
 A Next.js + shadcn/ui app that turns one form into Truwater Word documents (.docx):
 

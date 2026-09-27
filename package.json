@@ -1,5 +1,5 @@
 {
-  "name": "technical-proposal-doc-gen",
+  "name": "truwater-document-generator",
   "version": "0.1.0",
   "private": true,
   "scripts": {
