@@ -108,52 +108,48 @@ export function ProposalForm() {
           <CardTitle>Project details</CardTitle>
           <CardDescription>Used by both the RFQ and the Technical Proposal.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          {field("quoteNumber", "TTA Quote Number", { required: true, placeholder: "TTA0149" })}
-          {field("projectName", "Project Name", { required: true, placeholder: "275 Kent St" })}
-          <div className="grid gap-2 sm:col-span-2">
-            <Label htmlFor="projectAddress">Project Address</Label>
-            <Textarea
-              id="projectAddress"
-              value={data.projectAddress}
-              onChange={setField("projectAddress")}
-              rows={2}
-            />
-          </div>
-          {field("date", "Date", { type: "date" })}
-          <div className="grid gap-2">
-            <Label htmlFor="dateQuoteRequired">Date Quote Required</Label>
-            <div className="flex gap-2">
-              <Input
-                id="dateQuoteRequired"
-                type="date"
-                value={isAsap ? "" : data.dateQuoteRequired}
-                onChange={setField("dateQuoteRequired")}
-                disabled={isAsap}
+        <CardContent className="grid gap-6">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {field("quoteNumber", "TTA Quote Number", { required: true, placeholder: "TTA0149" })}
+            {field("projectName", "Project Name", { required: true, placeholder: "275 Kent St" })}
+            <div className="grid gap-2 sm:col-span-2">
+              <Label htmlFor="projectAddress">Project Address</Label>
+              <Textarea
+                id="projectAddress"
+                value={data.projectAddress}
+                onChange={setField("projectAddress")}
+                rows={2}
               />
-              <Button
-                type="button"
-                variant={isAsap ? "default" : "outline"}
-                aria-pressed={isAsap}
-                onClick={() =>
-                  setData((prev) => ({ ...prev, dateQuoteRequired: isAsap ? "" : ASAP }))
-                }
-              >
-                ASAP
-              </Button>
+            </div>
+            {field("date", "Date", { type: "date" })}
+            <div className="grid gap-2">
+              <Label htmlFor="dateQuoteRequired">Date Quote Required</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="dateQuoteRequired"
+                  type="date"
+                  value={isAsap ? "" : data.dateQuoteRequired}
+                  onChange={setField("dateQuoteRequired")}
+                  disabled={isAsap}
+                />
+                <Button
+                  type="button"
+                  variant={isAsap ? "default" : "outline"}
+                  aria-pressed={isAsap}
+                  onClick={() =>
+                    setData((prev) => ({ ...prev, dateQuoteRequired: isAsap ? "" : ASAP }))
+                  }
+                >
+                  ASAP
+                </Button>
+              </div>
+            </div>
+            <div className="sm:col-span-2">
+              {field("customerDetail", "Customer Detail", { placeholder: "Climatech NSW Pty Ltd" })}
             </div>
           </div>
-          <div className="sm:col-span-2">
-            {field("customerDetail", "Customer Detail", { placeholder: "Climatech NSW Pty Ltd" })}
-          </div>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Contacts</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-6">
+          <h3 className="border-t pt-6 text-sm font-semibold">Contacts</h3>
           <div className="grid gap-4 sm:grid-cols-3">
             {field("contactName", "Contact name")}
             {field("contactEmail", "Contact email", { type: "email" })}
