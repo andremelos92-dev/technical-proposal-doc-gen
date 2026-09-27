@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { FileDown, Loader2, Plus, RotateCcw, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import {
   type SpecKey,
 } from "@/lib/proposal";
 import { DOCUMENTS, generateDocument, type DocumentKind } from "@/lib/templates";
+import { cn } from "@/lib/utils";
 
 type TextField = Exclude<keyof ProposalData, "spec" | "revisions" | "flowType">;
 
@@ -34,7 +35,29 @@ function downloadBlob(blob: Blob, fileName: string) {
   URL.revokeObjectURL(url);
 }
 
-const REVISION_FIELDS: { key: keyof Revision; label: string; type?: string }[] = [
+const CONTACT_ROWS: {
+  label: string;
+  fields: { id: TextField; label: string; type?: string }[];
+}[] = [
+  {
+    label: "Contact",
+    fields: [
+      { id: "contactName", label: "Name" },
+      { id: "contactEmail", label: "Email", type: "email" },
+      { id: "contactPhone", label: "Phone", type: "tel" },
+    ],
+  },
+  {
+    label: "Salesman",
+    fields: [
+      { id: "salesmanName", label: "Name" },
+      { id: "salesmanEmail", label: "Email", type: "email" },
+      { id: "salesmanPhone", label: "Phone", type: "tel" },
+    ],
+  },
+];
+
+const REVISION_FIELDS:{ key: keyof Revision; label: string; type?: string }[] = [
   { key: "rev", label: "Rev." },
   { key: "date", label: "Date", type: "date" },
   { key: "status", label: "Status" },
@@ -76,8 +99,13 @@ export function ProposalForm() {
   const removeRevision = (index: number) =>
     setData((prev) => ({ ...prev, revisions: prev.revisions.filter((_, i) => i !== index) }));
 
-  const field = (id: TextField, label: string, props: React.ComponentProps<typeof Input> = {}) => (
-    <div className="grid gap-2">
+  const field = (
+    id: TextField,
+    label: string,
+    props: React.ComponentProps<typeof Input> = {},
+    className?: string
+  ) => (
+    <div className={cn("grid content-start gap-1.5", className)}>
       <Label htmlFor={id}>{label}</Label>
       <Input id={id} value={data[id]} onChange={setField(id)} {...props} />
     </div>
@@ -108,21 +136,34 @@ export function ProposalForm() {
           <CardTitle>Project Details</CardTitle>
           <CardDescription>Used by both the RFQ and the Technical Proposal.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-6">
-          <div className="grid gap-4 sm:grid-cols-2">
-            {field("quoteNumber", "TTA Quote Number", { required: true, placeholder: "TTA0149" })}
-            {field("projectName", "Project Name", { required: true, placeholder: "275 Kent St" })}
-            <div className="grid gap-2 sm:col-span-2">
-              <Label htmlFor="projectAddress">Project Address</Label>
-              <Textarea
-                id="projectAddress"
-                value={data.projectAddress}
-                onChange={setField("projectAddress")}
-                rows={2}
-              />
-            </div>
-            {field("date", "Date", { type: "date" })}
-            <div className="grid gap-2">
+        <CardContent className="grid gap-5">
+          <div className="grid gap-3 sm:grid-cols-12">
+            {field(
+              "quoteNumber",
+              "TTA Quote Number",
+              { required: true, placeholder: "TTA0149" },
+              "sm:col-span-3"
+            )}
+            {field(
+              "projectName",
+              "Project Name",
+              { required: true, placeholder: "275 Kent St" },
+              "sm:col-span-4"
+            )}
+            {field(
+              "customerDetail",
+              "Customer Detail",
+              { placeholder: "Climatech NSW Pty Ltd" },
+              "sm:col-span-5"
+            )}
+            {field(
+              "projectAddress",
+              "Project Address",
+              { placeholder: "275 Kent Street, Sydney NSW 2000" },
+              "sm:col-span-5"
+            )}
+            {field("date", "Date", { type: "date" }, "sm:col-span-3")}
+            <div className="grid content-start gap-1.5 sm:col-span-4">
               <Label htmlFor="dateQuoteRequired">Date Quote Required</Label>
               <div className="flex gap-2">
                 <Input
@@ -144,21 +185,31 @@ export function ProposalForm() {
                 </Button>
               </div>
             </div>
-            <div className="sm:col-span-2">
-              {field("customerDetail", "Customer Detail", { placeholder: "Climatech NSW Pty Ltd" })}
-            </div>
           </div>
 
-          <h3 className="border-t pt-6 text-sm font-semibold">Contacts</h3>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {field("contactName", "Contact name")}
-            {field("contactEmail", "Contact email", { type: "email" })}
-            {field("contactPhone", "Contact phone", { type: "tel" })}
-          </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {field("salesmanName", "Salesman name")}
-            {field("salesmanEmail", "Salesman email", { type: "email" })}
-            {field("salesmanPhone", "Salesman phone", { type: "tel" })}
+          <div className="grid items-center gap-x-3 gap-y-2 border-t pt-5 sm:grid-cols-[5.5rem_1fr_1.3fr_1fr]">
+            <span className="text-sm font-semibold">Contacts</span>
+            {["Name", "Email", "Phone"].map((heading) => (
+              <span key={heading} className="text-muted-foreground hidden text-xs font-medium sm:block">
+                {heading}
+              </span>
+            ))}
+            {CONTACT_ROWS.map((row) => (
+              <Fragment key={row.label}>
+                <Label className="text-muted-foreground mt-2 sm:mt-0">{row.label}</Label>
+                {row.fields.map(({ id, label, type }) => (
+                  <Input
+                    key={id}
+                    id={id}
+                    type={type}
+                    aria-label={`${row.label} ${label.toLowerCase()}`}
+                    placeholder={label}
+                    value={data[id]}
+                    onChange={setField(id)}
+                  />
+                ))}
+              </Fragment>
+            ))}
           </div>
         </CardContent>
       </Card>
