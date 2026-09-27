@@ -105,7 +105,7 @@ export function ProposalForm() {
     <form onSubmit={handleSubmit} className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Project details</CardTitle>
+          <CardTitle>Project Details</CardTitle>
           <CardDescription>Used by both the RFQ and the Technical Proposal.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6">
