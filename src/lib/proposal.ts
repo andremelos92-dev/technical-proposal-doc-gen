@@ -28,6 +28,138 @@ export type Revision = {
   remarks: string;
 };
 
+export type CommercialTower = {
+  equipment: string;
+  model: string;
+  cells: string;
+  flowRate: string;
+  hotTemperature: string;
+  coldTemperature: string;
+  wetBulb: string;
+  material: string;
+  driveType: string;
+  motor: string;
+  infill: string;
+  price: string;
+};
+
+export type CommercialScopeItem = {
+  description: string;
+  responsibility: "Truwater" | "Optional" | "Purchaser";
+};
+
+export type CommercialScheduleStep = {
+  description: string;
+  duration: string;
+};
+
+export type CommercialProposalData = {
+  towers: CommercialTower[];
+  scope: CommercialScopeItem[];
+  constructionSpares: string;
+  specialTools: string;
+  recommendedSpares: string;
+  erectionRate: string;
+  commissioningRate: string;
+  overtimeWeekdayRate: string;
+  overtimeSundayRate: string;
+  overtimeHolidayRate: string;
+  travelTerms: string;
+  purchaserResponsibilities: string;
+  deliveryTime: string;
+  deliveryNotes: string;
+  schedule: CommercialScheduleStep[];
+  priceBasis: string;
+  priceInclusions: string;
+  exclusions: string;
+  validity: string;
+  paymentAdvance: string;
+  paymentBalance: string;
+  warranty: string;
+  liability: string;
+};
+
+export function createInitialCommercialProposal(): CommercialProposalData {
+  return {
+    towers: [
+      {
+        equipment: "CT1 & CT2",
+        model: "ECX 1212D2-3B",
+        cells: "3 cells",
+        flowRate: "507.8 m3/h / 141.05 L/s",
+        hotTemperature: "35.0 °C",
+        coldTemperature: "29.6 °C",
+        wetBulb: "26.8 °C",
+        material: "SS316",
+        driveType: "Belt & Pulley",
+        motor: "3 x 11 kW (1 motor per cell)",
+        infill: "PVC Film Fill",
+        price: "389449",
+      },
+      {
+        equipment: "CT3",
+        model: "ECX 1414F2-1B",
+        cells: "1 cell",
+        flowRate: "273.6 m3/h / 76.0 L/s",
+        hotTemperature: "35.0 °C",
+        coldTemperature: "29.6 °C",
+        wetBulb: "26.8 °C",
+        material: "SS316",
+        driveType: "Belt & Pulley",
+        motor: "1 x 18.5 kW",
+        infill: "PVC Film Fill",
+        price: "160590",
+      },
+    ],
+    scope: [
+      { description: "SS316 frameworks, mechanical components and hardware", responsibility: "Truwater" },
+      { description: "SS316 cold water basin and supporting framework", responsibility: "Truwater" },
+      { description: "PP spray nozzles, PVC film fill and drift eliminators", responsibility: "Truwater" },
+      { description: "SS316 fan cylinders; aluminium alloy fan blades with galvanized steel hub", responsibility: "Truwater" },
+      { description: "Single-speed IP55 motors, 3 phase / 50 Hz / 400 V", responsibility: "Truwater" },
+      { description: "Recommended two-year operating spare parts", responsibility: "Optional" },
+      { description: "Erection and commissioning supervision and site erection work", responsibility: "Optional" },
+      { description: "Cabling, cable trays, lighting, instruments and controls", responsibility: "Purchaser" },
+      { description: "Concrete works, water treatment and external inlet piping", responsibility: "Purchaser" },
+    ],
+    constructionSpares: "2 blocks of PVC infill; 2 blocks of PVC drift eliminator; 5 spray nozzles",
+    specialTools: "Fan-blade inclinometer and glue machine",
+    recommendedSpares: "3 blocks each of PVC infill and drift eliminator; 5 spray nozzles",
+    erectionRate: "1600",
+    commissioningRate: "1600",
+    overtimeWeekdayRate: "300",
+    overtimeSundayRate: "300",
+    overtimeHolidayRate: "400",
+    travelTerms: "Flight, transportation and accommodation are additional, at cost +15% when arranged by Truwater, or to be provided by Purchaser.",
+    purchaserResponsibilities: [
+      "Provide an air-conditioned site office and work shed with power and water.",
+      "Provide an approximately 25 m x 50 m lay-down area near the tower location.",
+      "Keep utilities within 30 m of the work area; provide lighting for evening work if needed.",
+      "Construct and check foundations, including dimensional checks, chipping and leveling.",
+      "Provide site security and secure storage for mechanical and loose components.",
+      "Provide sheltered, ventilated storage for PVC fill and drift eliminators.",
+    ].join("\n"),
+    deliveryTime: "14-16 weeks",
+    deliveryNotes: "Preliminary schedule, subject to agreement of contractual requirements.",
+    schedule: [
+      { description: "Receive and process purchase order", duration: "1 week" },
+      { description: "Engineering design approval", duration: "1-2 weeks" },
+      { description: "Procure bought-out materials", duration: "1-2 weeks" },
+      { description: "Manufacturing and production", duration: "5-6 weeks" },
+      { description: "Inspection and packing", duration: "1 week" },
+      { description: "Packing and logistics to FOB", duration: "1 week" },
+    ],
+    priceBasis: "Delivered from Brisbane Port to Arthur Gorrie Correctional Centre in CKD form by flatbed container truck.",
+    priceInclusions: "Customs clearance and import duties are included.",
+    exclusions: "GST, container unloading, tower assembly and delivery to the work site are excluded.",
+    validity: "30 days from proposal date",
+    paymentAdvance: "30% advance payment upon purchase order confirmation",
+    paymentBalance: "70% on delivery to site, payable 30 days from invoice",
+    warranty: "12 months from delivery against manufacturing defects, subject to installation, operation and maintenance recommendations.",
+    liability: "No liability for consequential, indirect or special damages, or delays caused by conditions beyond Truwater's control.",
+  };
+}
+
 export type ProposalData = {
   projectName: string;
   projectAddress: string;
@@ -50,7 +182,21 @@ export type ProposalData = {
   recipient: Recipient;
   otherRecipient: string;
   revisions: Revision[];
+  commercial: CommercialProposalData;
 };
+
+export function resolvedCommercialTowers(data: Pick<ProposalData, "commercial" | "towerModel" | "spec">) {
+  return data.commercial.towers.map((tower, index) => ({
+    ...tower,
+    model: index === 0 ? data.towerModel.trim() || tower.model : tower.model,
+    hotTemperature: data.spec.condInTemp.trim() || tower.hotTemperature,
+    coldTemperature: data.spec.condOutTemp.trim() || tower.coldTemperature,
+    wetBulb: data.spec.wetBulbTemp.trim() || tower.wetBulb,
+    material: data.spec.casingMaterial.trim() || tower.material,
+    driveType: data.spec.fanDriveType.trim() || tower.driveType,
+    infill: data.spec.fillMaterial.trim() || tower.infill,
+  }));
+}
 
 /**
  * Companies a Technical Proposal can be addressed to instead of the end customer.
@@ -124,6 +270,7 @@ export function createInitialProposal(): ProposalData {
     recipient: "customer",
     otherRecipient: "",
     revisions: [createRevision("0")],
+    commercial: createInitialCommercialProposal(),
   };
 }
 

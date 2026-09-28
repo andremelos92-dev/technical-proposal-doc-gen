@@ -1,6 +1,7 @@
 import Docxtemplater from "docxtemplater";
 import PizZip from "pizzip";
 
+import { generateCommercialDocument } from "@/lib/commercial-document";
 import {
   formatDate,
   MAX_REVISIONS,
@@ -88,7 +89,7 @@ export const DOCUMENTS = {
   },
 } satisfies Record<string, DocumentTemplate>;
 
-export type DocumentKind = keyof typeof DOCUMENTS;
+export type DocumentKind = keyof typeof DOCUMENTS | "commercial";
 
 /** Fills a Word template's {placeholders}; everything else in the file is kept as-is. */
 export async function renderTemplate(templateUrl: string, values: TemplateValues): Promise<Blob> {
@@ -105,6 +106,8 @@ export async function renderTemplate(templateUrl: string, values: TemplateValues
 }
 
 export async function generateDocument(kind: DocumentKind, data: ProposalData) {
+  if (kind === "commercial") return generateCommercialDocument(data);
+
   const { templateUrl, values, fileName } = DOCUMENTS[kind];
   return { blob: await renderTemplate(templateUrl, values(data)), fileName: fileName(data) };
 }

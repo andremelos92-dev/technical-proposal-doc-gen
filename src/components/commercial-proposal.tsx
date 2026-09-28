@@ -3,8 +3,13 @@ import {
   projectTitle,
   proposalRecipient,
   referenceNumber,
+  resolvedCommercialTowers,
+  type CommercialProposalData,
+  type CommercialTower,
   type ProposalData,
+  type SpecKey,
 } from "@/lib/proposal";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -12,50 +17,43 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
+import { FileDown, Loader2 } from "lucide-react";
 
 type CommercialProposalProps = {
   data: ProposalData;
+  onChange: (updates: Partial<ProposalData>) => void;
+  onGenerate: () => void;
+  generating: boolean;
+  error: string | null;
 };
 
-const equipment = [
-  {
-    equipment: "CT1 & CT2",
-    model: "ECX 1212D2-3B",
-    cells: "3 cells",
-    flow: "507.8 m3/h / 141.05 L/s",
-    motor: "3 x 11 kW (1 motor per cell)",
-    price: 389449,
-  },
-  {
-    equipment: "CT3",
-    model: "ECX 1414F2-1B",
-    cells: "1 cell",
-    flow: "273.6 m3/h / 76.0 L/s",
-    motor: "1 x 18.5 kW",
-    price: 160590,
-  },
-] as const;
+const TOWER_FIELDS: { key: keyof CommercialTower; label: string; type?: string }[] = [
+  { key: "equipment", label: "Equipment number" },
+  { key: "model", label: "Cooling tower model" },
+  { key: "cells", label: "Number of cells" },
+  { key: "flowRate", label: "Design flow rate" },
+  { key: "hotTemperature", label: "Hot water temperature" },
+  { key: "coldTemperature", label: "Cold water temperature" },
+  { key: "wetBulb", label: "Wet bulb temperature" },
+  { key: "material", label: "Material of construction" },
+  { key: "driveType", label: "Drive type" },
+  { key: "motor", label: "Motor" },
+  { key: "infill", label: "Infill" },
+  { key: "price", label: "Price (AUD)", type: "number" },
+];
 
-const scope = [
-  ["SS316 frameworks, mechanical components and hardware", "Truwater"],
-  ["SS316 cold water basin and supporting framework", "Truwater"],
-  ["PP spray nozzles, PVC film fill and drift eliminators", "Truwater"],
-  ["SS316 fan cylinders; aluminium alloy fan blades with galvanized steel hub", "Truwater"],
-  ["Single-speed IP55 motors, 3 phase / 50 Hz / 400 V", "Truwater"],
-  ["Recommended two-year operating spare parts", "Optional"],
-  ["Erection and commissioning supervision and site erection work", "Optional"],
-  ["Cabling, cable trays, lighting, instruments and controls", "Purchaser"],
-  ["Concrete works, water treatment and external inlet piping", "Purchaser"],
-] as const;
-
-const schedule = [
-  ["Receive and process purchase order", "1 week"],
-  ["Engineering design approval", "1-2 weeks"],
-  ["Procure bought-out materials", "1-2 weeks"],
-  ["Manufacturing and production", "5-6 weeks"],
-  ["Inspection and packing", "1 week"],
-  ["Packing and logistics to FOB", "1 week"],
-] as const;
+const SHARED_TOWER_SPECS: Partial<Record<keyof CommercialTower, SpecKey>> = {
+  hotTemperature: "condInTemp",
+  coldTemperature: "condOutTemp",
+  wetBulb: "wetBulbTemp",
+  material: "casingMaterial",
+  driveType: "fanDriveType",
+  infill: "fillMaterial",
+};
 
 const currency = new Intl.NumberFormat("en-AU", {
   style: "currency",
@@ -63,10 +61,77 @@ const currency = new Intl.NumberFormat("en-AU", {
   minimumFractionDigits: 2,
 });
 
-export function CommercialProposal({ data }: CommercialProposalProps) {
+export function CommercialProposal({
+  data,
+  onChange,
+  onGenerate,
+  generating,
+  error,
+}: CommercialProposalProps) {
   const title = projectTitle(data) || "Project name from Documents form";
-  const total = equipment.reduce((sum, item) => sum + item.price, 0);
   const recipient = proposalRecipient(data) || "Customer from Documents form";
+  const updateCommercial = (commercial: CommercialProposalData) => onChange({ commercial });
+  const updateCommercialField = <K extends keyof CommercialProposalData>(
+    key: K,
+    value: CommercialProposalData[K]
+  ) => updateCommercial({ ...data.commercial, [key]: value });
+  const towers = resolvedCommercialTowers(data);
+
+  const setTowerField = (index: number, key: keyof CommercialTower, value: string) => {
+    if (index === 0 && key === "model") {
+      onChange({ towerModel: value });
+      return;
+    }
+    const sharedSpec = SHARED_TOWER_SPECS[key];
+    if (sharedSpec) {
+      onChange({ spec: { ...data.spec, [sharedSpec]: value } });
+      return;
+    }
+    updateCommercialField(
+      "towers",
+      data.commercial.towers.map((tower, towerIndex) =>
+        towerIndex === index ? { ...tower, [key]: value } : tower
+      )
+    );
+  };
+
+  const setScopeField = (index: number, key: "description" | "responsibility", value: string) =>
+    updateCommercialField(
+      "scope",
+      data.commercial.scope.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, [key]: value } : item
+      )
+    );
+
+  const setScheduleField = (index: number, key: "description" | "duration", value: string) =>
+    updateCommercialField(
+      "schedule",
+      data.commercial.schedule.map((step, stepIndex) =>
+        stepIndex === index ? { ...step, [key]: value } : step
+      )
+    );
+
+  const total = towers.reduce((sum, tower) => sum + (Number(tower.price) || 0), 0);
+
+  function textInput(label: string, value: string, onValue: (value: string) => void, type = "text") {
+    const id = `commercial-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+    return (
+      <div className="grid content-start gap-1.5">
+        <Label htmlFor={id}>{label}</Label>
+        <Input id={id} type={type} value={value} onChange={(event) => onValue(event.target.value)} />
+      </div>
+    );
+  }
+
+  function textArea(label: string, value: string, onValue: (value: string) => void, className?: string) {
+    const id = `commercial-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+    return (
+      <div className="grid content-start gap-1.5">
+        <Label htmlFor={id}>{label}</Label>
+        <Textarea id={id} value={value} onChange={(event) => onValue(event.target.value)} className={className} />
+      </div>
+    );
+  }
 
   return (
     <div className="grid min-w-0 grid-cols-1 gap-6" role="tabpanel" aria-label="Commercial Proposal">
@@ -77,15 +142,15 @@ export function CommercialProposal({ data }: CommercialProposalProps) {
           <p className="text-muted-foreground mt-1">Cooling tower supply · Truwater Technologies Australia Pty Ltd</p>
         </div>
         <div className="border-l-2 border-primary pl-3 text-sm">
-          <p className="font-semibold">DRAFT FOR REVIEW</p>
-          <p className="text-muted-foreground">Sample pricing and terms</p>
+          <p className="font-semibold">EDITABLE DRAFT</p>
+          <p className="text-muted-foreground">Review before issue</p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Proposal Details</CardTitle>
-          <CardDescription>Project details are shared with the RFQ and Technical Proposal form.</CardDescription>
+          <CardTitle>Proposal Cover</CardTitle>
+          <CardDescription>These values are copied directly from the RFQ and Technical Proposal fields.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
           <Detail label="Project" value={title} />
@@ -100,26 +165,43 @@ export function CommercialProposal({ data }: CommercialProposalProps) {
       </Card>
 
       <section className="grid gap-4" aria-labelledby="pricing-heading">
-        <div>
-          <h3 id="pricing-heading" className="text-lg font-semibold">Pricing Schedule</h3>
-          <p className="text-muted-foreground text-sm">Mechanical induced-draft counterflow cooling towers, SS316 construction.</p>
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h3 id="pricing-heading" className="text-lg font-semibold">Pricing Schedule</h3>
+            <p className="text-muted-foreground text-sm">Edit tower-specific values and pricing below.</p>
+          </div>
+          <div className="grid min-w-40 gap-1.5">
+            <Label htmlFor="commercial-flow-type">Tower type</Label>
+            <NativeSelect
+              id="commercial-flow-type"
+              value={data.flowType}
+              onChange={(event) => onChange({ flowType: event.target.value as ProposalData["flowType"] })}
+            >
+              <option value="Counterflow">Counterflow</option>
+              <option value="Crossflow">Crossflow</option>
+            </NativeSelect>
+          </div>
         </div>
-        {equipment.map((item) => (
-          <Card key={item.equipment} className="gap-0 overflow-hidden py-0">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-muted/60 px-5 py-3">
-              <h4 className="font-semibold">{item.equipment} · {item.model}</h4>
-              <span className="text-sm font-semibold">{currency.format(item.price)}</span>
-            </div>
-            <CardContent className="grid gap-x-8 gap-y-3 py-4 sm:grid-cols-2 lg:grid-cols-3">
-              <Detail label="Cells" value={item.cells} />
-              <Detail label="Arrangement" value="In-line" />
-              <Detail label="Design flow rate" value={item.flow} />
-              <Detail label="Water temperatures" value="35.0 °C in / 29.6 °C out" />
-              <Detail label="Wet bulb temperature" value="26.8 °C" />
-              <Detail label="Motor" value={item.motor} />
-              <Detail label="Drive / fill" value="Belt & pulley · PVC film fill" />
-              <Detail label="Construction" value="SS316 basin and support base" />
-              <Detail label="Price basis" value="C&F Brisbane Port, containerized" />
+        {towers.map((tower, index) => (
+          <Card key={`${tower.equipment}-${index}`}>
+            <CardHeader>
+              <CardTitle>{tower.equipment || `Cooling tower ${index + 1}`}</CardTitle>
+              <CardDescription>Equipment details and material price (C&amp;F Brisbane Port).</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {TOWER_FIELDS.map(({ key, label, type }) => (
+                <div key={key} className="grid content-start gap-1.5">
+                  <Label htmlFor={`commercial-tower-${index}-${key}`}>{label}</Label>
+                  <Input
+                    id={`commercial-tower-${index}-${key}`}
+                    type={type ?? "text"}
+                    min={type === "number" ? "0" : undefined}
+                    step={type === "number" ? "0.01" : undefined}
+                    value={tower[key]}
+                    onChange={(event) => setTowerField(index, key, event.target.value)}
+                  />
+                </div>
+              ))}
             </CardContent>
           </Card>
         ))}
@@ -135,9 +217,9 @@ export function CommercialProposal({ data }: CommercialProposalProps) {
       <Card>
         <CardHeader>
           <CardTitle>Scope of Supply</CardTitle>
-          <CardDescription>Indicative responsibility split transcribed from the sample proposal.</CardDescription>
+          <CardDescription>Edit scope descriptions and select who is responsible.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="grid gap-3">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[520px] text-left text-sm">
               <thead>
@@ -147,40 +229,49 @@ export function CommercialProposal({ data }: CommercialProposalProps) {
                 </tr>
               </thead>
               <tbody>
-                {scope.map(([description, responsibility]) => (
-                  <tr key={description} className="border-b last:border-0">
-                    <td className="py-2.5 pr-4">{description}</td>
-                    <td className="py-2.5 font-medium">{responsibility}</td>
+                {data.commercial.scope.map((item, index) => (
+                  <tr key={index} className="border-b last:border-0">
+                    <td className="py-2 pr-3">
+                      <Input
+                        aria-label={`Scope item ${index + 1}`}
+                        value={item.description}
+                        onChange={(event) => setScopeField(index, "description", event.target.value)}
+                      />
+                    </td>
+                    <td className="py-2">
+                      <NativeSelect
+                        aria-label={`Scope responsibility ${index + 1}`}
+                        value={item.responsibility}
+                        onChange={(event) => setScopeField(index, "responsibility", event.target.value)}
+                      >
+                        <option value="Truwater">Truwater</option>
+                        <option value="Optional">Optional</option>
+                        <option value="Purchaser">Purchaser</option>
+                      </NativeSelect>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          {textArea("Construction and commissioning spares", data.commercial.constructionSpares, (value) => updateCommercialField("constructionSpares", value))}
+          {textArea("Special tools included", data.commercial.specialTools, (value) => updateCommercialField("specialTools", value))}
+          {textArea("Recommended two-year spares (optional)", data.commercial.recommendedSpares, (value) => updateCommercialField("recommendedSpares", value))}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
           <CardTitle>Optional Items and Services</CardTitle>
-          <CardDescription>Options and rates shown for discussion; not included in the base lump sum unless noted.</CardDescription>
+          <CardDescription>Rates are editable; travel and accommodation remain separate.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-5 md:grid-cols-2">
-          <div>
-            <h4 className="mb-2 font-semibold">Included in base proposal</h4>
-            <ul className="text-muted-foreground list-disc space-y-1 pl-5 text-sm">
-              <li>Construction and commissioning spares: 2 blocks of PVC infill, 2 blocks of drift eliminator, 5 spray nozzles</li>
-              <li>Special tools: fan-blade inclinometer and glue machine</li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="mb-2 font-semibold">Optional</h4>
-            <ul className="text-muted-foreground list-disc space-y-1 pl-5 text-sm">
-              <li>Two-year operating spares: 3 blocks each of PVC infill and drift eliminator, 5 spray nozzles</li>
-              <li>Erection or commissioning supervision: AUD 1,600 per man-day</li>
-              <li>Overtime: AUD 300/hour Monday-Sunday; AUD 400/hour on public holidays</li>
-            </ul>
-            <p className="text-muted-foreground mt-2 text-sm">Travel, transport and accommodation are additional.</p>
-          </div>
+          {textInput("Erection supervision (AUD / man-day)", data.commercial.erectionRate, (value) => updateCommercialField("erectionRate", value), "number")}
+          {textInput("Commissioning supervision (AUD / man-day)", data.commercial.commissioningRate, (value) => updateCommercialField("commissioningRate", value), "number")}
+          {textInput("Overtime Monday-Saturday (AUD / hour)", data.commercial.overtimeWeekdayRate, (value) => updateCommercialField("overtimeWeekdayRate", value), "number")}
+          {textInput("Overtime Sunday (AUD / hour)", data.commercial.overtimeSundayRate, (value) => updateCommercialField("overtimeSundayRate", value), "number")}
+          {textInput("Overtime public holidays (AUD / hour)", data.commercial.overtimeHolidayRate, (value) => updateCommercialField("overtimeHolidayRate", value), "number")}
+          {textArea("Travel and accommodation terms", data.commercial.travelTerms, (value) => updateCommercialField("travelTerms", value), "min-h-20")}
         </CardContent>
       </Card>
 
@@ -190,51 +281,51 @@ export function CommercialProposal({ data }: CommercialProposalProps) {
           <CardDescription>Applies when Truwater or its supervisory services are engaged for tower erection.</CardDescription>
         </CardHeader>
         <CardContent>
-          <ul className="grid gap-x-8 gap-y-2 text-sm md:grid-cols-2">
-            <li>Provide an air-conditioned site office and work shed with power and water.</li>
-            <li>Provide an approximately 25 m x 50 m lay-down area near the tower location.</li>
-            <li>Keep utilities within 30 m of the work area; provide lighting for evening work if needed.</li>
-            <li>Construct and check foundations, including dimensional checks, chipping and leveling.</li>
-            <li>Provide site security and secure storage for mechanical and loose components.</li>
-            <li>Provide sheltered, ventilated storage for PVC fill and drift eliminators.</li>
-          </ul>
+          {textArea("Purchaser responsibilities (one item per line)", data.commercial.purchaserResponsibilities, (value) => updateCommercialField("purchaserResponsibilities", value), "min-h-40")}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
           <CardTitle>Delivery Schedule</CardTitle>
-          <CardDescription>Preliminary schedule: 14-16 weeks, subject to agreement of contractual requirements.</CardDescription>
+          <CardDescription>Edit the total delivery duration, notes and stage estimates.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {schedule.map(([step, duration], index) => (
-              <li key={step} className="flex gap-3 border-l-2 border-primary/40 pl-3">
-                <span className="text-primary text-xs font-bold">0{index + 1}</span>
-                <div>
-                  <p className="text-sm font-medium">{step}</p>
-                  <p className="text-muted-foreground text-xs">{duration}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          {textInput("Delivery time", data.commercial.deliveryTime, (value) => updateCommercialField("deliveryTime", value))}
+          {textInput("Delivery notes", data.commercial.deliveryNotes, (value) => updateCommercialField("deliveryNotes", value))}
+          {data.commercial.schedule.map((step, index) => (
+            <div key={index} className="grid gap-3 border-l-2 border-primary/40 pl-3 sm:grid-cols-[minmax(0,1fr)_8rem]">
+              {textInput(`Stage ${index + 1}`, step.description, (value) => setScheduleField(index, "description", value))}
+              {textInput(`Duration ${index + 1}`, step.duration, (value) => setScheduleField(index, "duration", value))}
+            </div>
+          ))}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
           <CardTitle>Commercial Terms</CardTitle>
-          <CardDescription>Sample terms from the supplied proposal.</CardDescription>
+          <CardDescription>Edit the commercial conditions before generating the Word document.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
-          <Detail label="Price basis" value="Delivered from Brisbane Port to Arthur Gorrie Correctional Centre in CKD form by flatbed container truck. Customs clearance and import duties included." />
-          <Detail label="Exclusions" value="GST, container unloading, tower assembly and delivery to the work site are excluded." />
-          <Detail label="Currency / validity" value="Australian dollars (AUD) · valid for 30 days from proposal date." />
-          <Detail label="Payment" value="30% advance on purchase order confirmation; 70% on site delivery, payable 30 days from invoice." />
-          <Detail label="Warranty" value="12 months from delivery against manufacturing defects, subject to installation, operation and maintenance recommendations." />
-          <Detail label="Delivery risk" value="No liability for consequential, indirect or special damages, or delays caused by conditions beyond Truwater's control." />
+          {textArea("Price basis", data.commercial.priceBasis, (value) => updateCommercialField("priceBasis", value))}
+          {textArea("Price inclusions", data.commercial.priceInclusions, (value) => updateCommercialField("priceInclusions", value))}
+          {textArea("Exclusions", data.commercial.exclusions, (value) => updateCommercialField("exclusions", value))}
+          {textInput("Proposal validity", data.commercial.validity, (value) => updateCommercialField("validity", value))}
+          {textArea("Advance payment", data.commercial.paymentAdvance, (value) => updateCommercialField("paymentAdvance", value))}
+          {textArea("Balance payment", data.commercial.paymentBalance, (value) => updateCommercialField("paymentBalance", value))}
+          {textArea("Warranty", data.commercial.warranty, (value) => updateCommercialField("warranty", value))}
+          {textArea("Liability", data.commercial.liability, (value) => updateCommercialField("liability", value))}
         </CardContent>
       </Card>
+
+      {error && <p className="text-destructive text-sm" role="alert">{error}</p>}
+      <div className="flex justify-end">
+        <Button type="button" size="lg" disabled={generating} onClick={onGenerate}>
+          {generating ? <Loader2 className="animate-spin" /> : <FileDown />}
+          Generate Commercial Proposal
+        </Button>
+      </div>
     </div>
   );
 }

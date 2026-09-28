@@ -27,7 +27,10 @@ import {
 import { DOCUMENTS, generateDocument, type DocumentKind } from "@/lib/templates";
 import { cn } from "@/lib/utils";
 
-type TextField = Exclude<keyof ProposalData, "spec" | "revisions" | "flowType" | "recipient">;
+type TextField = Exclude<
+  keyof ProposalData,
+  "spec" | "revisions" | "flowType" | "recipient" | "commercial"
+>;
 
 const RECIPIENT_OPTIONS: { value: Recipient; label: string }[] = [
   { value: "customer", label: "Customer" },
@@ -42,8 +45,10 @@ function downloadBlob(blob: Blob, fileName: string) {
   const link = document.createElement("a");
   link.href = url;
   link.download = fileName;
+  document.body.appendChild(link);
   link.click();
-  URL.revokeObjectURL(url);
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 const CONTACT_ROWS: {
@@ -135,11 +140,7 @@ export function ProposalForm() {
     </div>
   );
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
-    const kind = (submitter?.value ?? "rfq") as DocumentKind;
-
+  async function handleGenerate(kind: DocumentKind) {
     setGenerating(kind);
     setError(null);
     try {
@@ -151,6 +152,12 @@ export function ProposalForm() {
     } finally {
       setGenerating(null);
     }
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+    await handleGenerate((submitter?.value ?? "rfq") as DocumentKind);
   }
 
   return (
@@ -187,7 +194,13 @@ export function ProposalForm() {
       </div>
 
       {activeTab === "commercial" ? (
-        <CommercialProposal data={data} />
+        <CommercialProposal
+          data={data}
+          onChange={(updates) => setData((previous) => ({ ...previous, ...updates }))}
+          onGenerate={() => void handleGenerate("commercial")}
+          generating={generating === "commercial"}
+          error={error}
+        />
       ) : (
       <form onSubmit={handleSubmit} className="grid gap-6">
       <Card>
@@ -482,7 +495,7 @@ export function ProposalForm() {
         <Button type="button" variant="outline" onClick={() => setData(createInitialProposal())}>
           <RotateCcw /> Reset
         </Button>
-        {(Object.keys(DOCUMENTS) as DocumentKind[]).map((kind) => (
+        {(Object.keys(DOCUMENTS) as (keyof typeof DOCUMENTS)[]).map((kind) => (
           <Button key={kind} type="submit" value={kind} size="lg" disabled={!!generating}>
             {generating === kind ? <Loader2 className="animate-spin" /> : <FileDown />}
             {DOCUMENTS[kind].label}

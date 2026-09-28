@@ -4,6 +4,7 @@ A Next.js + shadcn/ui app that turns one form into Truwater Word documents (.doc
 
 - **RFQ**: the Quotation Project Summary (A4 landscape, Aptos)
 - **Technical Proposal**: the cover page (A4 portrait, Arial)
+- **Commercial Proposal**: an editable proposal with shared project and tower data, editable pricing and terms
 
 Each document is filled from a real Word template in `public/templates/`, so the logo, photos, fonts,
 sizes, borders and footer come straight from the original files. Filling happens in the browser with
@@ -19,7 +20,7 @@ npm run dev
 Open http://localhost:3000. The sidebar has:
 
 - **Dashboard** (`/`): quick links to start a document and, later, recent documents
-- **Documents** (`/documents`): the form; click **RFQ** or **Technical Proposal** to download
+- **Documents** (`/documents`): shared RFQ and Technical Proposal fields, plus a Commercial Proposal tab; each document can be downloaded as Word
 - **History** (`/history`): placeholder for saved and uploaded documents (coming soon)
 - **Account**: reserved for login (coming soon)
 
@@ -49,15 +50,17 @@ A button for it appears automatically on the form.
 
 ### Adding a new document
 
-1. Save the Word file into `public/templates/`, typing `{placeholders}` where the form values should go.
+1. For a template-based document, save the Word file into `public/templates/` and add `{placeholders}` where values should go.
 2. Add an entry to `DOCUMENTS` in `src/lib/templates.ts` with its label, template path, file name and a
-   function mapping the form data to the placeholders.
+   function mapping the form data to the placeholders. For programmatically authored Word files, add a
+   generator in `src/lib/` and route its document kind through `generateDocument`.
 
 A download button for it appears automatically at the bottom of the form.
 
 ## Where things live
 
 - `src/lib/proposal.ts`: form fields, default values, spec rows, reference number
+- `src/lib/commercial-document.ts`: editable Commercial Proposal Word document generator
 - `src/lib/templates.ts`: document registry and template filling
 - `src/components/app-shell.tsx`: sidebar navigation
 - `src/components/proposal-form.tsx`: the form UI
