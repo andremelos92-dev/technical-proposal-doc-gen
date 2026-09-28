@@ -3,6 +3,7 @@
 import { Fragment, useState } from "react";
 import { FileDown, Loader2, Plus, RotateCcw, Trash2 } from "lucide-react";
 
+import { CommercialProposal } from "@/components/commercial-proposal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -91,6 +92,7 @@ const REVISION_FIELDS: { key: keyof Revision; label: string; type?: string; widt
 
 export function ProposalForm() {
   const [data, setData] = useState<ProposalData>(createInitialProposal);
+  const [activeTab, setActiveTab] = useState<"documents" | "commercial">("documents");
   const [generating, setGenerating] = useState<DocumentKind | null>(null);
   const [error, setError] = useState<string | null>(null);
   const isAsap = data.dateQuoteRequired === ASAP;
@@ -152,7 +154,42 @@ export function ProposalForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-6">
+    <div className="grid gap-6">
+      <div className="flex border-b" role="tablist" aria-label="Document sections">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "documents"}
+          onClick={() => setActiveTab("documents")}
+          className={cn(
+            "min-w-0 flex-1 whitespace-normal border-b-2 px-2 py-3 text-center text-sm font-medium transition-colors sm:px-4",
+            activeTab === "documents"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
+        >
+          RFQ &amp; Technical Proposal
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "commercial"}
+          onClick={() => setActiveTab("commercial")}
+          className={cn(
+            "min-w-0 flex-1 whitespace-normal border-b-2 px-2 py-3 text-center text-sm font-medium transition-colors sm:px-4",
+            activeTab === "commercial"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Commercial Proposal
+        </button>
+      </div>
+
+      {activeTab === "commercial" ? (
+        <CommercialProposal data={data} />
+      ) : (
+      <form onSubmit={handleSubmit} className="grid gap-6">
       <Card>
         <CardHeader>
           <CardTitle>Project Details</CardTitle>
@@ -452,6 +489,8 @@ export function ProposalForm() {
           </Button>
         ))}
       </div>
-    </form>
+      </form>
+      )}
+    </div>
   );
 }
