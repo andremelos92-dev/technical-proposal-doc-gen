@@ -177,7 +177,7 @@ export function createInitialCommercialProposal(): CommercialProposalData {
       {
         flowType: "Counterflow",
         equipment: "CT1 & CT2",
-        model: "ECX 1212D2-3B",
+        model: "",
         cells: "3 cells",
         flowRate: "507.8 m3/h / 141.05 L/s",
         hotTemperature: "35.0 °C",
@@ -311,7 +311,8 @@ export function resolvedCommercialTowers(data: TowerSource) {
       if (specKey) (resolved as Record<string, string>)[key] = spec[specKey].trim() || String(tower[key]);
     }
     if (index === 0) {
-      resolved.model = data.towerModel.trim() || tower.model;
+      // Tower 1's model is always the Technical Proposal cover's Model.
+      resolved.model = data.towerModel;
       resolved.flowType = data.flowType;
     }
     return resolved;

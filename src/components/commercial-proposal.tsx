@@ -40,7 +40,7 @@ type CommercialProposalProps = {
 
 const TOWER_FIELDS: { key: keyof CommercialTower; label: string; type?: string; placeholder?: string }[] = [
   { key: "equipment", label: "Equipment No." },
-  { key: "model", label: "Cooling Tower Model" },
+  { key: "model", label: "Cooling Tower Model", placeholder: "ECF1212F4-1B-1" },
   { key: "cells", label: "No. Of Cells" },
   { key: "arrangement", label: "Arrangement", placeholder: "In-Line" },
   { key: "flowRate", label: "Design Flowrate", placeholder: "e.g. 73 (L/s)" },
