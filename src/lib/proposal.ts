@@ -56,6 +56,8 @@ export type CommercialScheduleStep = {
 export type CommercialProposalData = {
   /** The Commercial Proposal cover's own revision table (separate from the Technical Proposal). */
   revisions: Revision[];
+  /** "ATTN." line on the cover letter. */
+  attention: string;
   towers: CommercialTower[];
   scope: CommercialScopeItem[];
   constructionSpares: string;
@@ -86,6 +88,7 @@ export function createInitialCommercialProposal(): CommercialProposalData {
     revisions: [
       { ...createRevision("0"), preparedBy: "Craig Alcorn", checkedBy: "Kenx Wong", approvedBy: "WK How" },
     ],
+    attention: "",
     towers: [
       {
         equipment: "CT1 & CT2",

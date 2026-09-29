@@ -157,7 +157,15 @@ export function CommercialProposal({
           <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
             <Detail label="Project" value={title} />
             <Detail label="Client" value={recipient} />
-            <Detail label="Attention" value={data.contactName || "Contact from Documents form"} />
+            <div className="grid content-start gap-1.5">
+              <Label htmlFor="commercial-attention">ATTN.</Label>
+              <Input
+                id="commercial-attention"
+                placeholder="e.g. Aaron Hughes & Cale Watson"
+                value={data.commercial.attention}
+                onChange={(event) => updateCommercialField("attention", event.target.value)}
+              />
+            </div>
             <Detail label="Project address" value={data.projectAddress || "Project address from Documents form"} />
             <Detail label="TTA quote number" value={data.quoteNumber || "Quote number from Documents form"} />
             <Detail label="Reference number" value={referenceNumber(data) || "Generated from quote number and date"} />

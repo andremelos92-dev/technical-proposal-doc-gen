@@ -145,8 +145,9 @@ function commercialValues(data: ProposalData): Record<string, unknown> {
     commercialReference: referenceNumber(data),
     ...revisionValues(c.revisions),
     // Cover letter
-    clientLine: [partner, customer].filter(Boolean).join(" – "),
-    attention: data.contactName,
+    // Same "Addressed To" name as the Technical Proposal cover.
+    clientLine: proposalRecipient(data),
+    attention: c.attention,
     // Pricing schedule (one page per tower)
     flowType: data.flowType,
     ...towerValues,
