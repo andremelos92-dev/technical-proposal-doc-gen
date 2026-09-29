@@ -1,6 +1,6 @@
 import { list, put } from "@vercel/blob";
 
-import { historyTitle, isHistoryKind, type HistoryEntry } from "@/lib/history";
+import { historyTitle, isHistoryKind, restoreProposal, type HistoryEntry } from "@/lib/history";
 import { decodeTitle, encodeTitle, entryPath, isAuthorized, unauthorized } from "@/lib/history-server";
 import type { ProposalData } from "@/lib/proposal";
 
@@ -36,7 +36,8 @@ export async function POST(request: Request) {
     return Response.json({ error: "Nothing to save." }, { status: 400 });
   }
 
-  const title = historyTitle(body.data);
+  // Fill in any missing fields first, so an incomplete form still gets a title.
+  const title = historyTitle(restoreProposal(body.data));
   const id = `${Date.now()}_${encodeTitle(title)}`;
   await put(entryPath(body.kind, id), JSON.stringify(body.data), {
     access: "private",
