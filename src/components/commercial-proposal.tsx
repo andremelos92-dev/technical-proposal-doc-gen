@@ -114,18 +114,6 @@ export function CommercialProposal({
 
   return (
     <div className="grid min-w-0 grid-cols-1 gap-6" role="tabpanel" aria-label="Commercial Proposal">
-      <div className="flex min-w-0 flex-wrap items-start justify-between gap-4 border-b pb-5">
-        <div className="min-w-0">
-          <p className="text-primary text-xs font-semibold uppercase">Commercial Proposal Demo</p>
-          <h2 className="mt-1 break-words text-2xl font-bold tracking-tight">{title}</h2>
-          <p className="text-muted-foreground mt-1">Cooling tower supply · Truwater Technologies Australia Pty Ltd</p>
-        </div>
-        <div className="border-l-2 border-primary pl-3 text-sm">
-          <p className="font-semibold">EDITABLE DRAFT</p>
-          <p className="text-muted-foreground">Review before issue</p>
-        </div>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Proposal Cover</CardTitle>
