@@ -336,26 +336,9 @@ export function CommercialProposal({
               ) : null
             )}
           </div>
-          {textArea("Construction and commissioning spares", data.commercial.constructionSpares, (value) => updateCommercialField("constructionSpares", value))}
-          {textArea("Special tools included", data.commercial.specialTools, (value) => updateCommercialField("specialTools", value))}
-          {textArea("Recommended two-year spares (optional)", data.commercial.recommendedSpares, (value) => updateCommercialField("recommendedSpares", value))}
         </CardContent>
       </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Optional Items and Services</CardTitle>
-          <CardDescription>Rates are editable; travel and accommodation remain separate.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-5 md:grid-cols-2">
-          {textInput("Erection supervision (AUD / man-day)", data.commercial.erectionRate, (value) => updateCommercialField("erectionRate", value), "number")}
-          {textInput("Commissioning supervision (AUD / man-day)", data.commercial.commissioningRate, (value) => updateCommercialField("commissioningRate", value), "number")}
-          {textInput("Overtime Monday-Saturday (AUD / hour)", data.commercial.overtimeWeekdayRate, (value) => updateCommercialField("overtimeWeekdayRate", value), "number")}
-          {textInput("Overtime Sunday (AUD / hour)", data.commercial.overtimeSundayRate, (value) => updateCommercialField("overtimeSundayRate", value), "number")}
-          {textInput("Overtime public holidays (AUD / hour)", data.commercial.overtimeHolidayRate, (value) => updateCommercialField("overtimeHolidayRate", value), "number")}
-          {textArea("Travel and accommodation terms", data.commercial.travelTerms, (value) => updateCommercialField("travelTerms", value), "min-h-20")}
-        </CardContent>
-      </Card>
+      {/* Optional items (A spare parts, B supervision rates) are standard: printed from the defaults, not edited here. */}
 
       <Card>
         <CardHeader>
