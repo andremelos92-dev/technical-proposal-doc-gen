@@ -4,7 +4,9 @@ import {
   proposalRecipient,
   referenceNumber,
   resolvedCommercialTowers,
+  SIGNATORIES,
   type CommercialProposalData,
+  type SignatoryId,
   type CommercialTower,
   type ProposalData,
   type SpecKey,
@@ -171,6 +173,24 @@ export function CommercialProposal({
             <Detail label="Reference number" value={referenceNumber(data) || "Generated from quote number and date"} />
             <Detail label="Proposal date" value={formatDate(data.date)} />
             <Detail label="Subject" value={title} />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {(["signature1", "signature2"] as const).map((key, index) => (
+              <div key={key} className="grid content-start gap-1.5">
+                <Label htmlFor={`commercial-${key}`}>Signature {index + 1}</Label>
+                <NativeSelect
+                  id={`commercial-${key}`}
+                  value={data.commercial[key]}
+                  onChange={(event) => updateCommercialField(key, event.target.value as SignatoryId)}
+                >
+                  {SIGNATORIES.map((person) => (
+                    <option key={person.id} value={person.id}>
+                      {person.name} – {person.title}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </div>
+            ))}
           </div>
           <RevisionsEditor
             revisions={data.commercial.revisions}

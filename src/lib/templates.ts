@@ -8,6 +8,8 @@ import {
   proposalRecipient,
   referenceNumber,
   resolvedCommercialTowers,
+  SIGNATORIES,
+  type SignatoryId,
   SPEC_ROWS,
   type ProposalData,
   type Revision,
@@ -114,6 +116,17 @@ function listItems(value: string): string[] {
     .filter(Boolean);
 }
 
+/** Cover letter signature slot: which signature picture to keep, plus name, title and phone. */
+function signatureValues(slot: 1 | 2, id: SignatoryId): Record<string, unknown> {
+  const person = SIGNATORIES.find((signatory) => signatory.id === id) ?? SIGNATORIES[0];
+  return {
+    ...Object.fromEntries(SIGNATORIES.map((signatory) => [`sig${slot}_${signatory.id}`, signatory.id === person.id])),
+    [`sig${slot}_name`]: person.name,
+    [`sig${slot}_title`]: person.title,
+    [`sig${slot}_phone`]: person.phone,
+  };
+}
+
 function commercialValues(data: ProposalData): Record<string, unknown> {
   const c = data.commercial;
   const customer = data.customerDetail.trim();
@@ -148,6 +161,8 @@ function commercialValues(data: ProposalData): Record<string, unknown> {
     // Same "Addressed To" name as the Technical Proposal cover.
     clientLine: proposalRecipient(data),
     attention: c.attention,
+    ...signatureValues(1, c.signature1),
+    ...signatureValues(2, c.signature2),
     // Pricing schedule (one page per tower)
     flowType: data.flowType,
     ...towerValues,

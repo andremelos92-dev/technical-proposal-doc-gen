@@ -53,7 +53,19 @@ export type CommercialScheduleStep = {
   duration: string;
 };
 
+/** People who can sign the Commercial Proposal cover letter (their signatures are in the template). */
+export const SIGNATORIES = [
+  { id: "craig", name: "Craig Alcorn", title: "Sales & Project Manager", phone: "+(61)0476 202 471" },
+  { id: "kenx", name: "Kenx Wong", title: "Sales Director", phone: "(6)012-236 7782" },
+  { id: "andre", name: "Andre Santos", title: "Sales & Application Engineer", phone: "+61 (0)420 559 560" },
+] as const;
+
+export type SignatoryId = (typeof SIGNATORIES)[number]["id"];
+
 export type CommercialProposalData = {
+  /** Cover letter signatures, left and right. */
+  signature1: SignatoryId;
+  signature2: SignatoryId;
   /** The Commercial Proposal cover's own revision table (separate from the Technical Proposal). */
   revisions: Revision[];
   /** "ATTN." line on the cover letter. */
@@ -89,6 +101,8 @@ export function createInitialCommercialProposal(): CommercialProposalData {
       { ...createRevision("0"), preparedBy: "Craig Alcorn", checkedBy: "Kenx Wong", approvedBy: "WK How" },
     ],
     attention: "",
+    signature1: "craig",
+    signature2: "kenx",
     towers: [
       {
         equipment: "CT1 & CT2",
