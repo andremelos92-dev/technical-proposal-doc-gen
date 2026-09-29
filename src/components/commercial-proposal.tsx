@@ -26,7 +26,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
-import { Textarea } from "@/components/ui/textarea";
 import { FileDown, Loader2 } from "lucide-react";
 
 type CommercialProposalProps = {
@@ -110,26 +109,6 @@ export function CommercialProposal({
     );
 
   const total = towers.reduce((sum, tower) => sum + (Number(towerTotal(tower)) || 0), 0);
-
-  function textInput(label: string, value: string, onValue: (value: string) => void, type = "text") {
-    const id = `commercial-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
-    return (
-      <div className="grid content-start gap-1.5">
-        <Label htmlFor={id}>{label}</Label>
-        <Input id={id} type={type} value={value} onChange={(event) => onValue(event.target.value)} />
-      </div>
-    );
-  }
-
-  function textArea(label: string, value: string, onValue: (value: string) => void, className?: string) {
-    const id = `commercial-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
-    return (
-      <div className="grid content-start gap-1.5">
-        <Label htmlFor={id}>{label}</Label>
-        <Textarea id={id} value={value} onChange={(event) => onValue(event.target.value)} className={className} />
-      </div>
-    );
-  }
 
   return (
     <div className="grid min-w-0 grid-cols-1 gap-6" role="tabpanel" aria-label="Commercial Proposal">
@@ -352,7 +331,7 @@ export function CommercialProposal({
       <Card>
         <CardHeader>
           <CardTitle>Commercial Terms</CardTitle>
-          <CardDescription>Edit the commercial conditions before generating the Word document.</CardDescription>
+          <CardDescription>Price basis. The other terms of condition are standard and printed as they are.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="grid gap-4 sm:col-span-2 sm:grid-cols-[minmax(0,1fr)_10rem]">
@@ -381,13 +360,7 @@ export function CommercialProposal({
               {towers[0]?.port || "…"}).
             </p>
           </div>
-          {textArea("Price inclusions", data.commercial.priceInclusions, (value) => updateCommercialField("priceInclusions", value))}
-          {textArea("Exclusions", data.commercial.exclusions, (value) => updateCommercialField("exclusions", value))}
-          {textInput("Proposal validity", data.commercial.validity, (value) => updateCommercialField("validity", value))}
-          {textArea("Advance payment", data.commercial.paymentAdvance, (value) => updateCommercialField("paymentAdvance", value))}
-          {textArea("Balance payment", data.commercial.paymentBalance, (value) => updateCommercialField("paymentBalance", value))}
-          {textArea("Warranty", data.commercial.warranty, (value) => updateCommercialField("warranty", value))}
-          {textArea("Liability", data.commercial.liability, (value) => updateCommercialField("liability", value))}
+          {/* The other terms (inclusions, exclusions, validity, payment, warranty, liability) are standard. */}
         </CardContent>
       </Card>
 
