@@ -29,6 +29,8 @@ export type Revision = {
 };
 
 export type CommercialTower = {
+  /** Counterflow or Crossflow. Tower 1 always follows the Technical Proposal's tower type. */
+  flowType: FlowType;
   equipment: string;
   model: string;
   cells: string;
@@ -87,6 +89,7 @@ export const MAX_TOWER_TYPES = 5;
 
 export function createBlankTower(): CommercialTower {
   return {
+    flowType: "Counterflow",
     equipment: "",
     model: "",
     cells: "",
@@ -172,6 +175,7 @@ export function createInitialCommercialProposal(): CommercialProposalData {
     signature2: "kenx",
     towers: [
       {
+        flowType: "Counterflow",
         equipment: "CT1 & CT2",
         model: "ECX 1212D2-3B",
         cells: "3 cells",
@@ -289,7 +293,7 @@ export type ProposalData = {
   commercial: CommercialProposalData;
 };
 
-type TowerSource = Pick<ProposalData, "commercial" | "towerModel" | "spec" | "extraSpecs">;
+type TowerSource = Pick<ProposalData, "commercial" | "towerModel" | "flowType" | "spec" | "extraSpecs">;
 
 /** The specification of tower type `index` (0 = the RFQ's own specification). */
 export function towerSpec(data: Pick<ProposalData, "spec" | "extraSpecs">, index: number) {
@@ -303,9 +307,13 @@ export function resolvedCommercialTowers(data: TowerSource) {
     const resolved = { ...tower };
     for (const key of Object.keys(tower) as (keyof CommercialTower)[]) {
       const specKey = towerSpecKey(key);
-      if (specKey) resolved[key] = spec[specKey].trim() || tower[key];
+      // Spec-linked fields are all text fields.
+      if (specKey) (resolved as Record<string, string>)[key] = spec[specKey].trim() || String(tower[key]);
     }
-    if (index === 0) resolved.model = data.towerModel.trim() || tower.model;
+    if (index === 0) {
+      resolved.model = data.towerModel.trim() || tower.model;
+      resolved.flowType = data.flowType;
+    }
     return resolved;
   });
 }

@@ -4,8 +4,10 @@ import {
   proposalRecipient,
   referenceNumber,
   resolvedCommercialTowers,
+  FLOW_TYPES,
   PORTS,
   SIGNATORIES,
+  type FlowType,
   towerSpecKey,
   towerTotal,
   type CommercialProposalData,
@@ -174,28 +176,41 @@ export function CommercialProposal({
       </Card>
 
       <section className="grid gap-4" aria-labelledby="pricing-heading">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <div>
-            <h3 id="pricing-heading" className="text-lg font-semibold">Pricing Schedule</h3>
-            <p className="text-muted-foreground text-sm">Edit tower-specific values and pricing below.</p>
-          </div>
-          <div className="grid min-w-40 gap-1.5">
-            <Label htmlFor="commercial-flow-type">Tower type</Label>
-            <NativeSelect
-              id="commercial-flow-type"
-              value={data.flowType}
-              onChange={(event) => onChange({ flowType: event.target.value as ProposalData["flowType"] })}
-            >
-              <option value="Counterflow">Counterflow</option>
-              <option value="Crossflow">Crossflow</option>
-            </NativeSelect>
-          </div>
+        <div>
+          <h3 id="pricing-heading" className="text-lg font-semibold">Pricing Schedule</h3>
+          <p className="text-muted-foreground text-sm">
+            One pricing schedule per tower type. Add tower types with “Add New” on the Cooling Tower Specification.
+          </p>
         </div>
         {towers.map((tower, index) => (
-          <Card key={`${tower.equipment}-${index}`}>
-            <CardHeader>
-              <CardTitle>{tower.equipment || `Cooling tower ${index + 1}`}</CardTitle>
-              <CardDescription>Equipment details and material price (C&amp;F {tower.port || "…"} Port).</CardDescription>
+          <Card key={index}>
+            <CardHeader className="flex flex-wrap items-start justify-between gap-3">
+              <div className="grid gap-1.5">
+                <CardTitle>{tower.equipment || `Cooling tower ${index + 1}`}</CardTitle>
+                <CardDescription>Equipment details and material price (C&amp;F {tower.port || "…"} Port).</CardDescription>
+              </div>
+              <div className="grid min-w-40 gap-1.5">
+                <Label htmlFor={`commercial-tower-${index}-flow-type`}>
+                  Tower type
+                  {index === 0 && <span className="text-primary text-[10px] font-semibold">TECH PROP</span>}
+                </Label>
+                <NativeSelect
+                  id={`commercial-tower-${index}-flow-type`}
+                  value={tower.flowType}
+                  onChange={(event) => {
+                    const flowType = event.target.value as FlowType;
+                    // Tower 1 shares its tower type with the Technical Proposal cover.
+                    if (index === 0) onChange({ flowType });
+                    else setTowerField(index, "flowType", flowType);
+                  }}
+                >
+                  {FLOW_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </div>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div className="grid gap-4 border-b pb-4 sm:col-span-2 sm:grid-cols-3 lg:col-span-3">
