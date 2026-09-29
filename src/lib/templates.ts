@@ -119,7 +119,6 @@ function commercialValues(data: ProposalData): Record<string, unknown> {
   const customer = data.customerDetail.trim();
   const partner = data.recipient === "customer" ? "" : proposalRecipient(data);
   const towers = resolvedCommercialTowers(data);
-  const latestRev = [...data.revisions].reverse().find((revision) => revision.rev.trim())?.rev.trim();
   const exclusions = listItems(c.exclusions);
 
   const towerValues = Object.fromEntries(
@@ -141,10 +140,9 @@ function commercialValues(data: ProposalData): Record<string, unknown> {
     // Cover
     projectTitle: projectTitle(data),
     coverParties: [customer, partner].filter(Boolean),
-    coverTowerLines: towers.map((tower) =>
-      [tower.equipment.trim(), `${data.flowType} Model - ${tower.model.trim()}`].filter(Boolean).join(" ")
-    ),
-    commercialReference: `${referenceNumber(data)}${latestRev ? `R${latestRev}` : ""}`,
+    // Same model line and reference as the Technical Proposal cover.
+    coverTowerLines: [[`${data.flowType} Model`, data.towerModel.trim()].filter(Boolean).join(" - ")],
+    commercialReference: referenceNumber(data),
     ...revisionValues(data.revisions),
     // Cover letter
     clientLine: [partner, customer].filter(Boolean).join(" – "),
