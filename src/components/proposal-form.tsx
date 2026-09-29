@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import { FileDown, Loader2, RotateCcw } from "lucide-react";
+import { FileDown, Loader2, Plus, RotateCcw, Trash2 } from "lucide-react";
 
 import { CommercialProposal } from "@/components/commercial-proposal";
 import { RevisionsEditor } from "@/components/revisions-editor";
@@ -10,8 +10,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  addTowerType,
   createInitialProposal,
   FLOW_TYPES,
+  MAX_TOWER_TYPES,
+  removeTowerType,
   PARTNERS,
   proposalRecipient,
   referenceNumber,
@@ -25,7 +28,7 @@ import { cn } from "@/lib/utils";
 
 type TextField = Exclude<
   keyof ProposalData,
-  "spec" | "revisions" | "flowType" | "recipient" | "commercial"
+  "spec" | "extraSpecs" | "revisions" | "flowType" | "recipient" | "commercial"
 >;
 
 const RECIPIENT_OPTIONS: { value: Recipient; label: string }[] = [
@@ -80,8 +83,16 @@ export function ProposalForm() {
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => setData((prev) => ({ ...prev, [field]: event.target.value }));
 
-  const setSpec = (key: SpecKey) => (event: React.ChangeEvent<HTMLInputElement>) =>
-    setData((prev) => ({ ...prev, spec: { ...prev.spec, [key]: event.target.value } }));
+  // Tower type 0 is the RFQ's own specification; 1, 2… are the extra tower types.
+  const setSpecAt = (index: number, key: SpecKey, value: string) =>
+    setData((prev) =>
+      index === 0
+        ? { ...prev, spec: { ...prev.spec, [key]: value } }
+        : {
+            ...prev,
+            extraSpecs: prev.extraSpecs.map((spec, i) => (i === index - 1 ? { ...spec, [key]: value } : spec)),
+          }
+    );
 
   const field = (
     id: TextField,
@@ -261,30 +272,68 @@ export function ProposalForm() {
       </Card>
 
       <Card className="gap-4 py-5">
-        <CardHeader>
+        <CardHeader className="flex items-center justify-between gap-3">
           <CardTitle>Cooling Tower Specification</CardTitle>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setData((prev) => addTowerType(prev))}
+            disabled={data.extraSpecs.length + 1 >= MAX_TOWER_TYPES}
+          >
+            <Plus /> Add New
+          </Button>
         </CardHeader>
-        {/* Fills down the left column first, so the order matches the RFQ table. */}
-        <CardContent className="grid gap-x-8 gap-y-2 sm:grid-flow-col sm:grid-cols-2 sm:grid-rows-8">
-          {SPEC_ROWS.map((row) => (
-            <div
-              key={row.key}
-              className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] items-center gap-3 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]"
-            >
-              <Label htmlFor={row.key} className="block leading-snug">
-                {row.label}
-                {row.unit && (
-                  <span className="text-muted-foreground ml-1.5 text-xs font-normal whitespace-nowrap">
-                    {row.unit}
-                  </span>
-                )}
-              </Label>
-              <Input
-                id={row.key}
-                value={data.spec[row.key]}
-                onChange={setSpec(row.key)}
-                placeholder={row.example}
-              />
+        <CardContent className="grid gap-6">
+          {[data.spec, ...data.extraSpecs].map((spec, index) => (
+            <div key={index} className={cn("grid gap-3", index > 0 && "border-t pt-5")}>
+              {data.extraSpecs.length > 0 && (
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold">
+                    Tower Type {index + 1}
+                    <span className="text-muted-foreground ml-2 font-normal">
+                      {index === 0 ? "used by the RFQ · pricing schedule 1" : `pricing schedule ${index + 1}`}
+                    </span>
+                  </p>
+                  {index > 0 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setData((prev) => removeTowerType(prev, index))}
+                    >
+                      <Trash2 /> Remove
+                    </Button>
+                  )}
+                </div>
+              )}
+              {/* Fills down the left column first, so the order matches the RFQ table. */}
+              <div className="grid gap-x-8 gap-y-2 sm:grid-flow-col sm:grid-cols-2 sm:grid-rows-8">
+                {SPEC_ROWS.map((row) => {
+                  const id = index === 0 ? row.key : `${row.key}-${index + 1}`;
+                  return (
+                    <div
+                      key={row.key}
+                      className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] items-center gap-3 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]"
+                    >
+                      <Label htmlFor={id} className="block leading-snug">
+                        {row.label}
+                        {row.unit && (
+                          <span className="text-muted-foreground ml-1.5 text-xs font-normal whitespace-nowrap">
+                            {row.unit}
+                          </span>
+                        )}
+                      </Label>
+                      <Input
+                        id={id}
+                        value={spec[row.key]}
+                        onChange={(event) => setSpecAt(index, row.key, event.target.value)}
+                        placeholder={row.example}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           ))}
         </CardContent>

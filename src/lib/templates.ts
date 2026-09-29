@@ -9,6 +9,7 @@ import {
   referenceNumber,
   resolvedCommercialTowers,
   SIGNATORIES,
+  towerSpec,
   towerTotal,
   type CommercialTower,
   type SignatoryId,
@@ -171,14 +172,8 @@ function commercialValues(data: ProposalData): Record<string, unknown> {
   const towers = resolvedCommercialTowers(data);
   const exclusions = listItems(c.exclusions);
 
-  const towerValues = Object.fromEntries(
-    towers.slice(0, 2).flatMap((tower, index) =>
-      Object.entries(formatTower(tower, index === 0 ? data.spec.noOfFans : "")).map(([key, value]) => [
-        `t${index + 1}_${key}`,
-        value,
-      ])
-    )
-  );
+  // One pricing schedule page per tower type.
+  const pricingPages = towers.map((tower, index) => formatTower(tower, towerSpec(data, index).noOfFans));
   const scheduleValues = Object.fromEntries(
     c.schedule.flatMap((step, index) => [
       [`s${index + 1}_description`, step.description],
@@ -200,9 +195,9 @@ function commercialValues(data: ProposalData): Record<string, unknown> {
     attention: c.attention,
     ...signatureValues(1, c.signature1),
     ...signatureValues(2, c.signature2),
-    // Pricing schedule (one page per tower)
+    // Pricing schedule: the template repeats its page for each entry
     flowType: data.flowType,
-    ...towerValues,
+    pricingPages,
     // Scope of supply
     scope: c.scope.map((item) => ({
       description: item.description,

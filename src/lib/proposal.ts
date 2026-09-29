@@ -64,26 +64,47 @@ export function towerTotal(tower: Pick<CommercialTower, "price" | "quantity">): 
 /** Ports offered for the 1.2 / 1.3 pricing lines; any other port can be typed in. */
 export const PORTS = ["Brisbane", "Sydney", "Melbourne", "Adelaide", "Fremantle", "Darwin"] as const;
 
-/** Tower fields filled from the RFQ specification for every tower. */
-const ALL_TOWER_SPECS: Partial<Record<keyof CommercialTower, SpecKey>> = {
+/** Tower fields filled from that tower type's Cooling Tower Specification. */
+const TOWER_SPECS: Partial<Record<keyof CommercialTower, SpecKey>> = {
+  cells: "numberOfCells",
+  flowRate: "condenserFlowRate",
   hotTemperature: "condInTemp",
   coldTemperature: "condOutTemp",
   wetBulb: "wetBulbTemp",
   material: "casingMaterial",
   driveType: "fanDriveType",
+  motor: "fanKw",
   infill: "fillMaterial",
 };
 
-/** Tower fields filled from the RFQ specification for the first tower only. */
-const FIRST_TOWER_SPECS: Partial<Record<keyof CommercialTower, SpecKey>> = {
-  cells: "numberOfCells",
-  flowRate: "condenserFlowRate",
-  motor: "fanKw",
-};
+/** The specification row a tower field is linked to, if any. */
+export function towerSpecKey(key: keyof CommercialTower): SpecKey | undefined {
+  return TOWER_SPECS[key];
+}
 
-/** The RFQ spec row a tower field is linked to, if any. */
-export function towerSpecKey(index: number, key: keyof CommercialTower): SpecKey | undefined {
-  return ALL_TOWER_SPECS[key] ?? (index === 0 ? FIRST_TOWER_SPECS[key] : undefined);
+/** Most tower types (pricing schedules) one proposal can have. */
+export const MAX_TOWER_TYPES = 5;
+
+export function createBlankTower(): CommercialTower {
+  return {
+    equipment: "",
+    model: "",
+    cells: "",
+    flowRate: "",
+    hotTemperature: "",
+    coldTemperature: "",
+    wetBulb: "",
+    material: "",
+    driveType: "",
+    motor: "",
+    infill: "",
+    arrangement: "In-Line",
+    supportBase: "",
+    basin: "",
+    quantity: "1",
+    port: "Brisbane",
+    price: "",
+  };
 }
 
 export type CommercialScopeItem = {
@@ -165,25 +186,6 @@ export function createInitialCommercialProposal(): CommercialProposalData {
         quantity: "1",
         port: "Brisbane",
         price: "389449",
-      },
-      {
-        equipment: "CT3",
-        model: "ECX 1414F2-1B",
-        cells: "1 cell",
-        flowRate: "273.6 m3/h / 76.0 L/s",
-        hotTemperature: "35.0 °C",
-        coldTemperature: "29.6 °C",
-        wetBulb: "26.8 °C",
-        material: "SS316",
-        driveType: "Belt & Pulley",
-        motor: "1 x 18.5 kw",
-        infill: "PVC Film Fill",
-        arrangement: "In-Line",
-        supportBase: "",
-        basin: "",
-        quantity: "1",
-        port: "Brisbane",
-        price: "160590",
       },
     ],
     scope: [
@@ -271,7 +273,10 @@ export type ProposalData = {
   greeting: string;
   summaryIntro: string;
   folderLink: string;
+  /** Tower type 1 specification (also used by the RFQ). */
   spec: Record<SpecKey, string>;
+  /** Specifications for tower types 2, 3… (each gets its own pricing schedule). */
+  extraSpecs: Record<SpecKey, string>[];
   flowType: FlowType;
   towerModel: string;
   recipient: Recipient;
@@ -280,17 +285,43 @@ export type ProposalData = {
   commercial: CommercialProposalData;
 };
 
-export function resolvedCommercialTowers(data: Pick<ProposalData, "commercial" | "towerModel" | "spec">) {
-  // RFQ values win when filled; otherwise the Commercial tab's own value is used.
+type TowerSource = Pick<ProposalData, "commercial" | "towerModel" | "spec" | "extraSpecs">;
+
+/** The specification of tower type `index` (0 = the RFQ's own specification). */
+export function towerSpec(data: Pick<ProposalData, "spec" | "extraSpecs">, index: number) {
+  return index === 0 ? data.spec : (data.extraSpecs[index - 1] ?? createEmptySpec());
+}
+
+export function resolvedCommercialTowers(data: TowerSource) {
+  // Specification values win when filled; otherwise the Commercial tab's own value is used.
   return data.commercial.towers.map((tower, index) => {
+    const spec = towerSpec(data, index);
     const resolved = { ...tower };
     for (const key of Object.keys(tower) as (keyof CommercialTower)[]) {
-      const specKey = towerSpecKey(index, key);
-      if (specKey) resolved[key] = data.spec[specKey].trim() || tower[key];
+      const specKey = towerSpecKey(key);
+      if (specKey) resolved[key] = spec[specKey].trim() || tower[key];
     }
     if (index === 0) resolved.model = data.towerModel.trim() || tower.model;
     return resolved;
   });
+}
+
+/** Adds a tower type: a blank specification plus its Commercial Proposal tower. */
+export function addTowerType<T extends Pick<ProposalData, "extraSpecs" | "commercial">>(data: T): T {
+  return {
+    ...data,
+    extraSpecs: [...data.extraSpecs, createEmptySpec()],
+    commercial: { ...data.commercial, towers: [...data.commercial.towers, createBlankTower()] },
+  };
+}
+
+/** Removes tower type `index` (1 or more) with its Commercial Proposal tower. */
+export function removeTowerType<T extends Pick<ProposalData, "extraSpecs" | "commercial">>(data: T, index: number): T {
+  return {
+    ...data,
+    extraSpecs: data.extraSpecs.filter((_, i) => i !== index - 1),
+    commercial: { ...data.commercial, towers: data.commercial.towers.filter((_, i) => i !== index) },
+  };
 }
 
 /**
@@ -337,10 +368,9 @@ function today(): string {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
-const emptySpec = Object.fromEntries(SPEC_ROWS.map((row) => [row.key, ""])) as Record<
-  SpecKey,
-  string
->;
+export function createEmptySpec(): Record<SpecKey, string> {
+  return Object.fromEntries(SPEC_ROWS.map((row) => [row.key, ""])) as Record<SpecKey, string>;
+}
 
 export function createInitialProposal(): ProposalData {
   return {
@@ -359,7 +389,8 @@ export function createInitialProposal(): ProposalData {
     greeting: "Dear Engineers,",
     summaryIntro: "Please find my Summary",
     folderLink: "",
-    spec: { ...emptySpec },
+    spec: createEmptySpec(),
+    extraSpecs: [],
     flowType: "Counterflow",
     towerModel: "",
     recipient: "customer",

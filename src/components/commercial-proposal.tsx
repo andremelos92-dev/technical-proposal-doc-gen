@@ -83,10 +83,14 @@ export function CommercialProposal({
       onChange({ towerModel: value });
       return;
     }
-    // Fields linked to the RFQ specification are edited there, so both stay the same.
-    const specKey = towerSpecKey(index, key);
+    // Fields linked to this tower type's specification are edited there, so both stay the same.
+    const specKey = towerSpecKey(key);
     if (specKey) {
-      onChange({ spec: { ...data.spec, [specKey]: value } });
+      if (index === 0) onChange({ spec: { ...data.spec, [specKey]: value } });
+      else
+        onChange({
+          extraSpecs: data.extraSpecs.map((spec, i) => (i === index - 1 ? { ...spec, [specKey]: value } : spec)),
+        });
       return;
     }
     updateCommercialField(
@@ -283,9 +287,9 @@ export function CommercialProposal({
                 <div key={key} className="grid content-start gap-1.5">
                   <Label htmlFor={`commercial-tower-${index}-${key}`}>
                     {label}
-                    {(towerSpecKey(index, key) || (index === 0 && key === "model")) && (
+                    {(towerSpecKey(key) || (index === 0 && key === "model")) && (
                       <span className="text-primary text-[10px] font-semibold">
-                        {key === "model" ? "TECH PROP" : "RFQ"}
+                        {key === "model" ? "TECH PROP" : index === 0 ? "RFQ" : `SPEC ${index + 1}`}
                       </span>
                     )}
                   </Label>
