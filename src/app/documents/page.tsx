@@ -10,8 +10,8 @@ export default function DocumentsPage() {
       <header className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Documents</h1>
         <p className="text-muted-foreground mt-2">
-          Fill in the fields below and generate the RFQ or the Technical Proposal as a Word (.docx)
-          document.
+          Fill in the fields below and generate the RFQ, Technical Proposal or Commercial Proposal as
+          a Word (.docx) document.
         </p>
       </header>
       <ProposalForm />
