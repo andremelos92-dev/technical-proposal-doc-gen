@@ -54,6 +54,8 @@ export type CommercialScheduleStep = {
 };
 
 export type CommercialProposalData = {
+  /** The Commercial Proposal cover's own revision table (separate from the Technical Proposal). */
+  revisions: Revision[];
   towers: CommercialTower[];
   scope: CommercialScopeItem[];
   constructionSpares: string;
@@ -81,6 +83,9 @@ export type CommercialProposalData = {
 
 export function createInitialCommercialProposal(): CommercialProposalData {
   return {
+    revisions: [
+      { ...createRevision("0"), preparedBy: "Craig Alcorn", checkedBy: "Kenx Wong", approvedBy: "WK How" },
+    ],
     towers: [
       {
         equipment: "CT1 & CT2",

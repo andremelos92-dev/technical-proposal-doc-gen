@@ -1,27 +1,23 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import { FileDown, Loader2, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { FileDown, Loader2, RotateCcw } from "lucide-react";
 
 import { CommercialProposal } from "@/components/commercial-proposal";
+import { RevisionsEditor } from "@/components/revisions-editor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelect } from "@/components/ui/native-select";
 import {
   createInitialProposal,
-  createRevision,
   FLOW_TYPES,
-  MAX_REVISIONS,
   PARTNERS,
   proposalRecipient,
   referenceNumber,
-  REVISION_PEOPLE,
   SPEC_ROWS,
   type ProposalData,
   type Recipient,
-  type Revision,
   type SpecKey,
 } from "@/lib/proposal";
 import { DOCUMENTS, generateDocument, type DocumentKind } from "@/lib/templates";
@@ -73,28 +69,6 @@ const CONTACT_ROWS: {
   },
 ];
 
-type PersonColumn = keyof typeof REVISION_PEOPLE;
-
-function isPersonColumn(key: keyof Revision): key is PersonColumn {
-  return key in REVISION_PEOPLE;
-}
-
-/** The names offered for a sign-off column, keeping any other name already entered. */
-function personOptions(column: PersonColumn, current: string): readonly string[] {
-  const names: readonly string[] = REVISION_PEOPLE[column];
-  return current && !names.includes(current) ? [...names, current] : names;
-}
-
-const REVISION_FIELDS: { key: keyof Revision; label: string; type?: string; width?: string }[] = [
-  { key: "rev", label: "Rev.", width: "w-14" },
-  { key: "date", label: "Date", type: "date", width: "w-38" },
-  { key: "status", label: "Status", width: "w-28" },
-  { key: "preparedBy", label: "Prepared By", width: "w-36" },
-  { key: "checkedBy", label: "Checked By", width: "w-36" },
-  { key: "approvedBy", label: "Approved By", width: "w-36" },
-  { key: "remarks", label: "Remarks" },
-];
-
 export function ProposalForm() {
   const [data, setData] = useState<ProposalData>(createInitialProposal);
   const [activeTab, setActiveTab] = useState<"documents" | "commercial">("documents");
@@ -108,25 +82,6 @@ export function ProposalForm() {
 
   const setSpec = (key: SpecKey) => (event: React.ChangeEvent<HTMLInputElement>) =>
     setData((prev) => ({ ...prev, spec: { ...prev.spec, [key]: event.target.value } }));
-
-  const setRevision = (index: number, key: keyof Revision) => (
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) =>
-    setData((prev) => ({
-      ...prev,
-      revisions: prev.revisions.map((revision, i) =>
-        i === index ? { ...revision, [key]: event.target.value } : revision
-      ),
-    }));
-
-  const addRevision = () =>
-    setData((prev) => ({
-      ...prev,
-      revisions: [...prev.revisions, createRevision(String(prev.revisions.length))],
-    }));
-
-  const removeRevision = (index: number) =>
-    setData((prev) => ({ ...prev, revisions: prev.revisions.filter((_, i) => i !== index) }));
 
   const field = (
     id: TextField,
@@ -411,81 +366,10 @@ export function ProposalForm() {
             </div>
           </div>
 
-          <div className="grid gap-2">
-            <Label>Revisions</Label>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[880px] table-fixed border-separate border-spacing-1 text-sm">
-                <thead>
-                  <tr className="text-muted-foreground text-left">
-                    {REVISION_FIELDS.map((column) => (
-                      <th key={column.key} className={cn("font-medium", column.width)}>
-                        {column.label}
-                      </th>
-                    ))}
-                    <th className="w-9">
-                      <span className="sr-only">Remove</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.revisions.map((revision, index) => (
-                    <tr key={index}>
-                      {REVISION_FIELDS.map((column) => (
-                        <td key={column.key}>
-                          {isPersonColumn(column.key) ? (
-                            <NativeSelect
-                              aria-label={`${column.label} (row ${index + 1})`}
-                              value={revision[column.key]}
-                              onChange={setRevision(index, column.key)}
-                            >
-                              <option value="">–</option>
-                              {personOptions(column.key, revision[column.key]).map((name) => (
-                                <option key={name} value={name}>
-                                  {name}
-                                </option>
-                              ))}
-                            </NativeSelect>
-                          ) : (
-                            <Input
-                              aria-label={`${column.label} (row ${index + 1})`}
-                              type={column.type}
-                              value={revision[column.key]}
-                              onChange={setRevision(index, column.key)}
-                            />
-                          )}
-                        </td>
-                      ))}
-                      <td>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Remove revision ${revision.rev || index + 1}`}
-                          onClick={() => removeRevision(index)}
-                        >
-                          <Trash2 />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addRevision}
-                disabled={data.revisions.length >= MAX_REVISIONS}
-              >
-                <Plus /> Add Revision
-              </Button>
-              <span className="text-muted-foreground text-xs">
-                Up to {MAX_REVISIONS} revisions fit in the table.
-              </span>
-            </div>
-          </div>
+          <RevisionsEditor
+            revisions={data.revisions}
+            onChange={(revisions) => setData((prev) => ({ ...prev, revisions }))}
+          />
         </CardContent>
       </Card>
 

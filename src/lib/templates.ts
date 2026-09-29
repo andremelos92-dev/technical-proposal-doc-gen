@@ -143,7 +143,7 @@ function commercialValues(data: ProposalData): Record<string, unknown> {
     // Same model line and reference as the Technical Proposal cover.
     coverTowerLines: [[`${data.flowType} Model`, data.towerModel.trim()].filter(Boolean).join(" - ")],
     commercialReference: referenceNumber(data),
-    ...revisionValues(data.revisions),
+    ...revisionValues(c.revisions),
     // Cover letter
     clientLine: [partner, customer].filter(Boolean).join(" – "),
     attention: data.contactName,

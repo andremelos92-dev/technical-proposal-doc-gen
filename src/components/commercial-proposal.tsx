@@ -9,6 +9,7 @@ import {
   type ProposalData,
   type SpecKey,
 } from "@/lib/proposal";
+import { RevisionsEditor } from "@/components/revisions-editor";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -152,15 +153,21 @@ export function CommercialProposal({
           <CardTitle>Proposal Cover</CardTitle>
           <CardDescription>These values are copied directly from the RFQ and Technical Proposal fields.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Detail label="Project" value={title} />
-          <Detail label="Client" value={recipient} />
-          <Detail label="Attention" value={data.contactName || "Contact from Documents form"} />
-          <Detail label="Project address" value={data.projectAddress || "Project address from Documents form"} />
-          <Detail label="TTA quote number" value={data.quoteNumber || "Quote number from Documents form"} />
-          <Detail label="Reference number" value={referenceNumber(data) || "Generated from quote number and date"} />
-          <Detail label="Proposal date" value={formatDate(data.date)} />
-          <Detail label="Subject" value={title} />
+        <CardContent className="grid gap-6">
+          <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+            <Detail label="Project" value={title} />
+            <Detail label="Client" value={recipient} />
+            <Detail label="Attention" value={data.contactName || "Contact from Documents form"} />
+            <Detail label="Project address" value={data.projectAddress || "Project address from Documents form"} />
+            <Detail label="TTA quote number" value={data.quoteNumber || "Quote number from Documents form"} />
+            <Detail label="Reference number" value={referenceNumber(data) || "Generated from quote number and date"} />
+            <Detail label="Proposal date" value={formatDate(data.date)} />
+            <Detail label="Subject" value={title} />
+          </div>
+          <RevisionsEditor
+            revisions={data.commercial.revisions}
+            onChange={(revisions) => updateCommercialField("revisions", revisions)}
+          />
         </CardContent>
       </Card>
 
