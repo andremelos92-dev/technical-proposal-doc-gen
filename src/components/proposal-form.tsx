@@ -1,10 +1,11 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { FileDown, Loader2, Plus, RotateCcw, Trash2 } from "lucide-react";
 
 import { CommercialProposal } from "@/components/commercial-proposal";
 import { RevisionsEditor } from "@/components/revisions-editor";
+import { SaveToHistory } from "@/components/save-to-history";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ import {
   type Recipient,
   type SpecKey,
 } from "@/lib/proposal";
+import { LOAD_KEY, restoreProposal } from "@/lib/history";
 import { DOCUMENTS, generateDocument, type DocumentKind } from "@/lib/templates";
 import { cn } from "@/lib/utils";
 
@@ -77,6 +79,20 @@ export function ProposalForm() {
   const [activeTab, setActiveTab] = useState<"documents" | "commercial">("documents");
   const [generating, setGenerating] = useState<DocumentKind | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // An entry loaded on the History page arrives here once, then is cleared.
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem(LOAD_KEY);
+      if (!stored) return;
+      sessionStorage.removeItem(LOAD_KEY);
+      const { kind, data: saved } = JSON.parse(stored);
+      setData(restoreProposal(saved));
+      if (kind === "commercial") setActiveTab("commercial");
+    } catch {
+      // Ignore a malformed hand-over; the form simply starts empty.
+    }
+  }, []);
   const isAsap = data.dateQuoteRequired === ASAP;
 
   const setField = (field: TextField) => (
@@ -428,6 +444,7 @@ export function ProposalForm() {
         <Button type="button" variant="outline" onClick={() => setData(createInitialProposal())}>
           <RotateCcw /> Reset
         </Button>
+        <SaveToHistory data={data} kinds={["rfq", "proposal"]} />
         {(Object.keys(DOCUMENTS) as (keyof typeof DOCUMENTS)[]).map((kind) => (
           <Button key={kind} type="submit" value={kind} size="lg" disabled={!!generating}>
             {generating === kind ? <Loader2 className="animate-spin" /> : <FileDown />}
