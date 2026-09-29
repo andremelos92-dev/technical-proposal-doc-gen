@@ -319,42 +319,22 @@ export function CommercialProposal({
       <Card>
         <CardHeader>
           <CardTitle>Scope of Supply</CardTitle>
-          <CardDescription>Edit scope descriptions and select who is responsible.</CardDescription>
+          <CardDescription>
+            Items supplied by Truwater. The Optional and By Purchaser items stay in the document as they are.
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[520px] text-left text-sm">
-              <thead>
-                <tr className="border-b text-muted-foreground">
-                  <th className="py-2 pr-4 font-medium">Description</th>
-                  <th className="w-36 py-2 font-medium">Responsibility</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.commercial.scope.map((item, index) => (
-                  <tr key={index} className="border-b last:border-0">
-                    <td className="py-2 pr-3">
-                      <Input
-                        aria-label={`Scope item ${index + 1}`}
-                        value={item.description}
-                        onChange={(event) => setScopeField(index, "description", event.target.value)}
-                      />
-                    </td>
-                    <td className="py-2">
-                      <NativeSelect
-                        aria-label={`Scope responsibility ${index + 1}`}
-                        value={item.responsibility}
-                        onChange={(event) => setScopeField(index, "responsibility", event.target.value)}
-                      >
-                        <option value="Truwater">Truwater</option>
-                        <option value="Optional">Optional</option>
-                        <option value="Purchaser">Purchaser</option>
-                      </NativeSelect>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {data.commercial.scope.map((item, index) =>
+              item.responsibility === "Truwater" ? (
+                <Input
+                  key={index}
+                  aria-label={`Truwater scope item ${index + 1}`}
+                  value={item.description}
+                  onChange={(event) => setScopeField(index, "description", event.target.value)}
+                />
+              ) : null
+            )}
           </div>
           {textArea("Construction and commissioning spares", data.commercial.constructionSpares, (value) => updateCommercialField("constructionSpares", value))}
           {textArea("Special tools included", data.commercial.specialTools, (value) => updateCommercialField("specialTools", value))}
