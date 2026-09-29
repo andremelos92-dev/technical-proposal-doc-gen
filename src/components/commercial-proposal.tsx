@@ -355,7 +355,32 @@ export function CommercialProposal({
           <CardDescription>Edit the commercial conditions before generating the Word document.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
-          {textArea("Price basis", data.commercial.priceBasis, (value) => updateCommercialField("priceBasis", value))}
+          <div className="grid gap-4 sm:col-span-2 sm:grid-cols-[minmax(0,1fr)_10rem]">
+            <div className="grid content-start gap-1.5">
+              <Label htmlFor="commercial-delivery-site">Price Basis – Delivered To Site At</Label>
+              <Input
+                id="commercial-delivery-site"
+                placeholder={data.projectAddress || "e.g. Arthur Gorrie Correctional Centre, 3068 Ipswich Rd, Wacol QLD 4076"}
+                value={data.commercial.deliverySite}
+                onChange={(event) => updateCommercialField("deliverySite", event.target.value)}
+              />
+            </div>
+            <div className="grid content-start gap-1.5">
+              <Label htmlFor="commercial-containers">No. Of Containers</Label>
+              <Input
+                id="commercial-containers"
+                type="number"
+                min="1"
+                step="1"
+                value={data.commercial.containers}
+                onChange={(event) => updateCommercialField("containers", event.target.value)}
+              />
+            </div>
+            <p className="text-muted-foreground text-xs sm:col-span-2">
+              Blank site = the project address. The port follows tower 1&apos;s C&amp;F port (
+              {towers[0]?.port || "…"}).
+            </p>
+          </div>
           {textArea("Price inclusions", data.commercial.priceInclusions, (value) => updateCommercialField("priceInclusions", value))}
           {textArea("Exclusions", data.commercial.exclusions, (value) => updateCommercialField("exclusions", value))}
           {textInput("Proposal validity", data.commercial.validity, (value) => updateCommercialField("validity", value))}

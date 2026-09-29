@@ -154,6 +154,20 @@ function formatTower(tower: CommercialTower, fans: string) {
   };
 }
 
+const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+
+/** "Base Cooling Tower Price basis shall be delivered to site at, <site> from the <port> Port in CKD … two (2) container …" */
+function priceBasis(data: ProposalData, port: string): string {
+  const site = data.commercial.deliverySite.trim() || data.projectAddress.trim();
+  const count = plainNumber(data.commercial.containers);
+  const containers =
+    count !== null && Number.isInteger(count) && count <= 10 ? `${NUMBER_WORDS[count]} (${count})` : data.commercial.containers.trim();
+  return (
+    `Base Cooling Tower Price basis shall be delivered to site at, ${site} from the ${port.trim()} Port ` +
+    `in CKD (Complete Knock Down) form in ${containers} container by flatbed container truck.`
+  );
+}
+
 /** Cover letter signature slot: which signature picture to keep, plus name, title and phone. */
 function signatureValues(slot: 1 | 2, id: SignatoryId): Record<string, unknown> {
   const person = SIGNATORIES.find((signatory) => signatory.id === id) ?? SIGNATORIES[0];
@@ -221,7 +235,7 @@ function commercialValues(data: ProposalData): Record<string, unknown> {
     ...scheduleValues,
     deliveryTime: c.deliveryTime,
     // Terms of condition: (a) inclusions, (b) first exclusion, (c) liability, (d)+ remaining exclusions
-    priceBasis: c.priceBasis,
+    priceBasis: priceBasis(data, towers[0]?.port ?? ""),
     priceClauses: [c.priceInclusions.trim(), exclusions[0], c.liability.trim(), ...exclusions.slice(1)].filter(Boolean),
     validity: c.validity,
     paymentAdvance: c.paymentAdvance,

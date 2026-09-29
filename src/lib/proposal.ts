@@ -149,7 +149,10 @@ export type CommercialProposalData = {
   deliveryTime: string;
   deliveryNotes: string;
   schedule: CommercialScheduleStep[];
-  priceBasis: string;
+  /** Price basis: site the towers are delivered to (blank = the project address). */
+  deliverySite: string;
+  /** Price basis: number of containers, e.g. "2" -> "two (2) container". */
+  containers: string;
   priceInclusions: string;
   exclusions: string;
   validity: string;
@@ -246,7 +249,8 @@ export function createInitialCommercialProposal(): CommercialProposalData {
       { description: "Inspection & Packing", duration: "1wk" },
       { description: "Packing and Logistic FOB", duration: "1wk" },
     ],
-    priceBasis: "Base Cooling Tower Price basis shall be delivered to site at, Arthur Gorrie Correctional Centre, 3068 Ipswich Rd, Wacol QLD 4076 from the Brisbane Port in CKD (Complete Knock Down) form in two (2) container by flatbed container truck.",
+    deliverySite: "",
+    containers: "2",
     priceInclusions: "All prices quoted Include Custom Clearance, Import duties.",
     exclusions: "(b) Price is exclusive of GST.\n(d) No Allowance for unloading containers is included within this quotation.\n(e) No Allowance for building cooling towers is included within this quotation.\n(f) No Allowance for delivery to work site is included within this quotation.",
     validity: "Thirty (30) days from the date of Proposal",
