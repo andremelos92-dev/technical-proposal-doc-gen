@@ -116,7 +116,7 @@ export function CommercialProposal({
     <div className="grid min-w-0 grid-cols-1 gap-6" role="tabpanel" aria-label="Commercial Proposal">
       <Card>
         <CardHeader>
-          <CardTitle>Commercial Cover Page</CardTitle>
+          <CardTitle>Commercial Proposal Cover</CardTitle>
           <CardDescription>These values are copied directly from the RFQ and Technical Proposal fields.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6">
