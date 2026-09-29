@@ -40,8 +40,35 @@ export type CommercialTower = {
   driveType: string;
   motor: string;
   infill: string;
+  arrangement: string;
+  /** Blank = same as the material of construction. */
+  supportBase: string;
+  /** Blank = same as the material of construction. */
+  basin: string;
   price: string;
 };
+
+/** Tower fields filled from the RFQ specification for every tower. */
+const ALL_TOWER_SPECS: Partial<Record<keyof CommercialTower, SpecKey>> = {
+  hotTemperature: "condInTemp",
+  coldTemperature: "condOutTemp",
+  wetBulb: "wetBulbTemp",
+  material: "casingMaterial",
+  driveType: "fanDriveType",
+  infill: "fillMaterial",
+};
+
+/** Tower fields filled from the RFQ specification for the first tower only. */
+const FIRST_TOWER_SPECS: Partial<Record<keyof CommercialTower, SpecKey>> = {
+  cells: "numberOfCells",
+  flowRate: "condenserFlowRate",
+  motor: "fanKw",
+};
+
+/** The RFQ spec row a tower field is linked to, if any. */
+export function towerSpecKey(index: number, key: keyof CommercialTower): SpecKey | undefined {
+  return ALL_TOWER_SPECS[key] ?? (index === 0 ? FIRST_TOWER_SPECS[key] : undefined);
+}
 
 export type CommercialScopeItem = {
   description: string;
@@ -116,6 +143,9 @@ export function createInitialCommercialProposal(): CommercialProposalData {
         driveType: "Belt & Pulley",
         motor: "3 x 11 kw (1 motor per cell)",
         infill: "PVC Film Fill",
+        arrangement: "In-Line",
+        supportBase: "",
+        basin: "",
         price: "389449",
       },
       {
@@ -130,6 +160,9 @@ export function createInitialCommercialProposal(): CommercialProposalData {
         driveType: "Belt & Pulley",
         motor: "1 x 18.5 kw",
         infill: "PVC Film Fill",
+        arrangement: "In-Line",
+        supportBase: "",
+        basin: "",
         price: "160590",
       },
     ],
@@ -228,16 +261,16 @@ export type ProposalData = {
 };
 
 export function resolvedCommercialTowers(data: Pick<ProposalData, "commercial" | "towerModel" | "spec">) {
-  return data.commercial.towers.map((tower, index) => ({
-    ...tower,
-    model: index === 0 ? data.towerModel.trim() || tower.model : tower.model,
-    hotTemperature: data.spec.condInTemp.trim() || tower.hotTemperature,
-    coldTemperature: data.spec.condOutTemp.trim() || tower.coldTemperature,
-    wetBulb: data.spec.wetBulbTemp.trim() || tower.wetBulb,
-    material: data.spec.casingMaterial.trim() || tower.material,
-    driveType: data.spec.fanDriveType.trim() || tower.driveType,
-    infill: data.spec.fillMaterial.trim() || tower.infill,
-  }));
+  // RFQ values win when filled; otherwise the Commercial tab's own value is used.
+  return data.commercial.towers.map((tower, index) => {
+    const resolved = { ...tower };
+    for (const key of Object.keys(tower) as (keyof CommercialTower)[]) {
+      const specKey = towerSpecKey(index, key);
+      if (specKey) resolved[key] = data.spec[specKey].trim() || tower[key];
+    }
+    if (index === 0) resolved.model = data.towerModel.trim() || tower.model;
+    return resolved;
+  });
 }
 
 /**

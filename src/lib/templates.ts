@@ -9,6 +9,7 @@ import {
   referenceNumber,
   resolvedCommercialTowers,
   SIGNATORIES,
+  type CommercialTower,
   type SignatoryId,
   SPEC_ROWS,
   type ProposalData,
@@ -116,6 +117,39 @@ function listItems(value: string): string[] {
     .filter(Boolean);
 }
 
+/** The number in a plain numeric value ("1,680" -> 1680), or null when it has other text. */
+function plainNumber(value: string): number | null {
+  const cleaned = value.replace(/[,\s]/g, "");
+  return /^\d+(\.\d+)?$/.test(cleaned) ? Number(cleaned) : null;
+}
+
+/**
+ * Pricing table values for one tower. Plain numbers typed in the RFQ get the units used in the
+ * proposal ("3" -> "3 cells", "73" L/s -> "262.8 m3/h / 73 L/s", "35" -> "35.0 °C", "11" -> "3 x 11 kw").
+ */
+function formatTower(tower: CommercialTower, fans: string) {
+  const cells = plainNumber(tower.cells);
+  const flow = plainNumber(tower.flowRate);
+  const kw = plainNumber(tower.motor);
+  const count = plainNumber(fans) ?? cells;
+  const temperature = (value: string) => {
+    const n = plainNumber(value);
+    return n === null ? value : `${n.toFixed(1)} °C`;
+  };
+  return {
+    ...tower,
+    cells: cells === null ? tower.cells : `${cells} ${cells === 1 ? "cell" : "cells"}`,
+    flowRate: flow === null ? tower.flowRate : `${(flow * 3.6).toFixed(1)} m3/h / ${NUMBER.format(flow)} L/s`,
+    hotTemperature: temperature(tower.hotTemperature),
+    coldTemperature: temperature(tower.coldTemperature),
+    wetBulb: temperature(tower.wetBulb),
+    motor: kw === null ? tower.motor : count ? `${count} x ${NUMBER.format(kw)} kw` : `${NUMBER.format(kw)} kw`,
+    supportBase: tower.supportBase.trim() || tower.material,
+    basin: tower.basin.trim() || tower.material,
+    price: audPrice(tower.price),
+  };
+}
+
 /** Cover letter signature slot: which signature picture to keep, plus name, title and phone. */
 function signatureValues(slot: 1 | 2, id: SignatoryId): Record<string, unknown> {
   const person = SIGNATORIES.find((signatory) => signatory.id === id) ?? SIGNATORIES[0];
@@ -136,7 +170,7 @@ function commercialValues(data: ProposalData): Record<string, unknown> {
 
   const towerValues = Object.fromEntries(
     towers.slice(0, 2).flatMap((tower, index) =>
-      Object.entries({ ...tower, price: audPrice(tower.price) }).map(([key, value]) => [
+      Object.entries(formatTower(tower, index === 0 ? data.spec.noOfFans : "")).map(([key, value]) => [
         `t${index + 1}_${key}`,
         value,
       ])

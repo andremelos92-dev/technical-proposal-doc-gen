@@ -5,6 +5,7 @@ import {
   referenceNumber,
   resolvedCommercialTowers,
   SIGNATORIES,
+  towerSpecKey,
   type CommercialProposalData,
   type SignatoryId,
   type CommercialTower,
@@ -34,29 +35,23 @@ type CommercialProposalProps = {
   error: string | null;
 };
 
-const TOWER_FIELDS: { key: keyof CommercialTower; label: string; type?: string }[] = [
-  { key: "equipment", label: "Equipment number" },
-  { key: "model", label: "Cooling tower model" },
-  { key: "cells", label: "Number of cells" },
-  { key: "flowRate", label: "Design flow rate" },
-  { key: "hotTemperature", label: "Hot water temperature" },
-  { key: "coldTemperature", label: "Cold water temperature" },
-  { key: "wetBulb", label: "Wet bulb temperature" },
-  { key: "material", label: "Material of construction" },
-  { key: "driveType", label: "Drive type" },
-  { key: "motor", label: "Motor" },
-  { key: "infill", label: "Infill" },
+const TOWER_FIELDS: { key: keyof CommercialTower; label: string; type?: string; placeholder?: string }[] = [
+  { key: "equipment", label: "Equipment No." },
+  { key: "model", label: "Cooling Tower Model" },
+  { key: "cells", label: "No. Of Cells" },
+  { key: "arrangement", label: "Arrangement", placeholder: "In-Line" },
+  { key: "flowRate", label: "Design Flowrate", placeholder: "e.g. 73 (L/s)" },
+  { key: "hotTemperature", label: "Hot (Inlet) Water Temp", placeholder: "e.g. 35" },
+  { key: "coldTemperature", label: "Cold (Outlet) Water Temp", placeholder: "e.g. 29.5" },
+  { key: "wetBulb", label: "Wet Bulb Temp", placeholder: "e.g. 23" },
+  { key: "material", label: "Material Of Construction" },
+  { key: "driveType", label: "Type Of Drive" },
+  { key: "motor", label: "Motor kW", placeholder: "e.g. 11" },
+  { key: "infill", label: "Type Of Infill" },
+  { key: "supportBase", label: "Mechanical Support Base", placeholder: "Same as material" },
+  { key: "basin", label: "Cold Water Basin", placeholder: "Same as material" },
   { key: "price", label: "Price (AUD)", type: "number" },
 ];
-
-const SHARED_TOWER_SPECS: Partial<Record<keyof CommercialTower, SpecKey>> = {
-  hotTemperature: "condInTemp",
-  coldTemperature: "condOutTemp",
-  wetBulb: "wetBulbTemp",
-  material: "casingMaterial",
-  driveType: "fanDriveType",
-  infill: "fillMaterial",
-};
 
 const currency = new Intl.NumberFormat("en-AU", {
   style: "currency",
@@ -85,9 +80,10 @@ export function CommercialProposal({
       onChange({ towerModel: value });
       return;
     }
-    const sharedSpec = SHARED_TOWER_SPECS[key];
-    if (sharedSpec) {
-      onChange({ spec: { ...data.spec, [sharedSpec]: value } });
+    // Fields linked to the RFQ specification are edited there, so both stay the same.
+    const specKey = towerSpecKey(index, key);
+    if (specKey) {
+      onChange({ spec: { ...data.spec, [specKey]: value } });
       return;
     }
     updateCommercialField(
@@ -224,11 +220,19 @@ export function CommercialProposal({
               <CardDescription>Equipment details and material price (C&amp;F Brisbane Port).</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {TOWER_FIELDS.map(({ key, label, type }) => (
+              {TOWER_FIELDS.map(({ key, label, type, placeholder }) => (
                 <div key={key} className="grid content-start gap-1.5">
-                  <Label htmlFor={`commercial-tower-${index}-${key}`}>{label}</Label>
+                  <Label htmlFor={`commercial-tower-${index}-${key}`}>
+                    {label}
+                    {(towerSpecKey(index, key) || (index === 0 && key === "model")) && (
+                      <span className="text-primary text-[10px] font-semibold">
+                        {key === "model" ? "TECH PROP" : "RFQ"}
+                      </span>
+                    )}
+                  </Label>
                   <Input
                     id={`commercial-tower-${index}-${key}`}
+                    placeholder={placeholder}
                     type={type ?? "text"}
                     min={type === "number" ? "0" : undefined}
                     step={type === "number" ? "0.01" : undefined}
