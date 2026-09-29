@@ -150,6 +150,10 @@ export function CommercialProposal({
             <Detail label="Proposal date" value={formatDate(data.date)} />
             <Detail label="Subject" value={title} />
           </div>
+          <RevisionsEditor
+            revisions={data.commercial.revisions}
+            onChange={(revisions) => updateCommercialField("revisions", revisions)}
+          />
           <div className="grid gap-4 sm:grid-cols-2">
             {(["signature1", "signature2"] as const).map((key, index) => (
               <div key={key} className="grid content-start gap-1.5">
@@ -168,10 +172,6 @@ export function CommercialProposal({
               </div>
             ))}
           </div>
-          <RevisionsEditor
-            revisions={data.commercial.revisions}
-            onChange={(revisions) => updateCommercialField("revisions", revisions)}
-          />
         </CardContent>
       </Card>
 
