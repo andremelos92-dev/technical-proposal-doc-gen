@@ -4,7 +4,8 @@ A Next.js + shadcn/ui app that turns one form into Truwater Word documents (.doc
 
 - **RFQ**: the Quotation Project Summary (A4 landscape, Aptos)
 - **Technical Proposal**: the cover page (A4 portrait, Arial)
-- **Commercial Proposal**: an editable proposal with shared project and tower data, editable pricing and terms
+- **Commercial Proposal**: the 9-page commercial proposal (cover, cover letter, pricing per tower, scope of
+  supply, optional items, delivery schedule, terms)
 
 Each document is filled from a real Word template in `public/templates/`, so the logo, photos, fonts,
 sizes, borders and footer come straight from the original files. Filling happens in the browser with
@@ -32,6 +33,7 @@ Sidebar items are listed in `NAV_ITEMS` in `src/components/app-shell.tsx`.
 | --- | --- |
 | `public/templates/rfq.docx` | `{documentTitle}` (title + footer), `{projectTitle}`, `{projectAddress}`, `{quoteNumber}`, `{date}`, `{dateQuoteRequired}`, `{customerDetail}`, `{contactName}`, `{contactEmail}`, `{contactPhone}`, `{salesmanName}`, `{salesmanEmail}`, `{salesmanPhone}`, `{greeting}`, `{summaryIntro}`, `{#folderLink}…{/folderLink}`, `{spec_<key>}` for each row in `SPEC_ROWS` |
 | `public/templates/technical-proposal.docx` | `{projectTitle}`, `{customerDetail}`, `{modelLine}`, `{referenceNumber}`, `{r1_rev}` … `{r5_remarks}` (revision rows 1–5: `rev`, `date`, `status`, `preparedBy`, `checkedBy`, `approvedBy`, `remarks`) |
+| `public/templates/commercial-proposal.docx` | Made from the original Word proposal. Cover: `{projectTitle}`, loops `coverParties` and `coverTowerLines`, `{commercialReference}`, revision rows. Letter: `{clientLine}`, `{attention}`. Pricing (towers 1–2): `{t1_equipment}` … `{t2_price}`, `{flowType}`. Scope: `scope` table-row loop. Optional items: loops `constructionSpares`, `specialTools`, `recommendedSpares`, rates, `{travelTerms}`. Delivery: loop `responsibilities`, `{deliveryNotes}`, `{s1_description}` … `{s6_duration}`, `{deliveryTime}`. Terms: `{priceBasis}`, loop `priceClauses`, `{validity}`, `{paymentAdvance}`, `{paymentBalance}`, `{warranty}` |
 
 To change a layout, open the template in Word, edit it, and keep the `{placeholders}` where the values go.
 Whatever formatting a placeholder has (font, size, bold, colour) is what the filled value gets.
@@ -60,7 +62,6 @@ A download button for it appears automatically at the bottom of the form.
 ## Where things live
 
 - `src/lib/proposal.ts`: form fields, default values, spec rows, reference number
-- `src/lib/commercial-document.ts`: editable Commercial Proposal Word document generator
 - `src/lib/templates.ts`: document registry and template filling
 - `src/components/app-shell.tsx`: sidebar navigation
 - `src/components/proposal-form.tsx`: the form UI

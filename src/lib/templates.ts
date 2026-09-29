@@ -1,13 +1,13 @@
 import Docxtemplater from "docxtemplater";
 import PizZip from "pizzip";
 
-import { generateCommercialDocument } from "@/lib/commercial-document";
 import {
   formatDate,
   MAX_REVISIONS,
   projectTitle,
   proposalRecipient,
   referenceNumber,
+  resolvedCommercialTowers,
   SPEC_ROWS,
   type ProposalData,
   type Revision,
@@ -91,8 +91,107 @@ export const DOCUMENTS = {
 
 export type DocumentKind = keyof typeof DOCUMENTS | "commercial";
 
+const AUD = new Intl.NumberFormat("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const NUMBER = new Intl.NumberFormat("en-AU", { maximumFractionDigits: 2 });
+
+/** "389449" -> "AUD $ 389,449.00"; anything that isn't a plain number is kept as typed. */
+function audPrice(value: string): string {
+  const amount = Number(value.replace(/[,\s]/g, ""));
+  return value.trim() && Number.isFinite(amount) ? `AUD $ ${AUD.format(amount)}` : value;
+}
+
+/** "1600" -> "1,600"; anything that isn't a plain number is kept as typed. */
+function rate(value: string): string {
+  const amount = Number(value.replace(/[,\s]/g, ""));
+  return value.trim() && Number.isFinite(amount) ? NUMBER.format(amount) : value;
+}
+
+/** Splits a multi-line field into list items, dropping manual "a)" / "(b)" prefixes (Word numbers them). */
+function listItems(value: string): string[] {
+  return value
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^\s*\(?[a-z]\)\s*/i, "").trim())
+    .filter(Boolean);
+}
+
+function commercialValues(data: ProposalData): Record<string, unknown> {
+  const c = data.commercial;
+  const customer = data.customerDetail.trim();
+  const partner = data.recipient === "customer" ? "" : proposalRecipient(data);
+  const towers = resolvedCommercialTowers(data);
+  const latestRev = [...data.revisions].reverse().find((revision) => revision.rev.trim())?.rev.trim();
+  const exclusions = listItems(c.exclusions);
+
+  const towerValues = Object.fromEntries(
+    towers.slice(0, 2).flatMap((tower, index) =>
+      Object.entries({ ...tower, price: audPrice(tower.price) }).map(([key, value]) => [
+        `t${index + 1}_${key}`,
+        value,
+      ])
+    )
+  );
+  const scheduleValues = Object.fromEntries(
+    c.schedule.flatMap((step, index) => [
+      [`s${index + 1}_description`, step.description],
+      [`s${index + 1}_duration`, step.duration],
+    ])
+  );
+
+  return {
+    // Cover
+    projectTitle: projectTitle(data),
+    coverParties: [customer, partner].filter(Boolean),
+    coverTowerLines: towers.map((tower) =>
+      [tower.equipment.trim(), `${data.flowType} Model - ${tower.model.trim()}`].filter(Boolean).join(" ")
+    ),
+    commercialReference: `${referenceNumber(data)}${latestRev ? `R${latestRev}` : ""}`,
+    ...revisionValues(data.revisions),
+    // Cover letter
+    clientLine: [partner, customer].filter(Boolean).join(" – "),
+    attention: data.contactName,
+    // Pricing schedule (one page per tower)
+    flowType: data.flowType,
+    ...towerValues,
+    // Scope of supply
+    scope: c.scope.map((item) => ({
+      description: item.description,
+      truwater: item.responsibility === "Truwater",
+      optional: item.responsibility === "Optional",
+      purchaser: item.responsibility === "Purchaser",
+    })),
+    // Optional items
+    constructionSpares: listItems(c.constructionSpares),
+    specialTools: listItems(c.specialTools),
+    recommendedSpares: listItems(c.recommendedSpares),
+    travelTerms: c.travelTerms,
+    erectionRate: rate(c.erectionRate),
+    commissioningRate: rate(c.commissioningRate),
+    overtimeWeekdayRate: rate(c.overtimeWeekdayRate),
+    overtimeSundayRate: rate(c.overtimeSundayRate),
+    overtimeHolidayRate: rate(c.overtimeHolidayRate),
+    // Purchaser responsibilities and delivery
+    responsibilities: listItems(c.purchaserResponsibilities),
+    deliveryNotes: c.deliveryNotes,
+    ...scheduleValues,
+    deliveryTime: c.deliveryTime,
+    // Terms of condition: (a) inclusions, (b) first exclusion, (c) liability, (d)+ remaining exclusions
+    priceBasis: c.priceBasis,
+    priceClauses: [c.priceInclusions.trim(), exclusions[0], c.liability.trim(), ...exclusions.slice(1)].filter(Boolean),
+    validity: c.validity,
+    paymentAdvance: c.paymentAdvance,
+    paymentBalance: c.paymentBalance,
+    warranty: c.warranty,
+  };
+}
+
+const COMMERCIAL_TEMPLATE_URL = "/templates/commercial-proposal.docx";
+const commercialFileName = (data: ProposalData) => fileName("Commercial Proposal", data);
+
 /** Fills a Word template's {placeholders}; everything else in the file is kept as-is. */
-export async function renderTemplate(templateUrl: string, values: TemplateValues): Promise<Blob> {
+export async function renderTemplate(
+  templateUrl: string,
+  values: Record<string, unknown>
+): Promise<Blob> {
   const response = await fetch(templateUrl);
   if (!response.ok) throw new Error(`Template not found: ${templateUrl}`);
 
@@ -106,7 +205,12 @@ export async function renderTemplate(templateUrl: string, values: TemplateValues
 }
 
 export async function generateDocument(kind: DocumentKind, data: ProposalData) {
-  if (kind === "commercial") return generateCommercialDocument(data);
+  if (kind === "commercial") {
+    return {
+      blob: await renderTemplate(COMMERCIAL_TEMPLATE_URL, commercialValues(data)),
+      fileName: commercialFileName(data),
+    };
+  }
 
   const { templateUrl, values, fileName } = DOCUMENTS[kind];
   return { blob: await renderTemplate(templateUrl, values(data)), fileName: fileName(data) };
