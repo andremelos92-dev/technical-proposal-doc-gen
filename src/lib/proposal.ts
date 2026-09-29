@@ -45,8 +45,24 @@ export type CommercialTower = {
   supportBase: string;
   /** Blank = same as the material of construction. */
   basin: string;
+  /** 1.1 price per unit (AUD). */
   price: string;
+  quantity: string;
+  /** Port named in 1.2 / 1.3, e.g. "Brisbane" ("C&F Brisbane Port"). */
+  port: string;
 };
+
+/** 1.2 / 1.3 amount: price x quantity (as a plain number string), or the price if either isn't a number. */
+export function towerTotal(tower: Pick<CommercialTower, "price" | "quantity">): string {
+  const price = Number(tower.price.replace(/[,\s$]/g, ""));
+  const quantity = Number((tower.quantity.trim() || "1").replace(/[,\s]/g, ""));
+  return tower.price.trim() && Number.isFinite(price) && Number.isFinite(quantity)
+    ? String(Math.round(price * quantity * 100) / 100)
+    : tower.price;
+}
+
+/** Ports offered for the 1.2 / 1.3 pricing lines; any other port can be typed in. */
+export const PORTS = ["Brisbane", "Sydney", "Melbourne", "Adelaide", "Fremantle", "Darwin"] as const;
 
 /** Tower fields filled from the RFQ specification for every tower. */
 const ALL_TOWER_SPECS: Partial<Record<keyof CommercialTower, SpecKey>> = {
@@ -146,6 +162,8 @@ export function createInitialCommercialProposal(): CommercialProposalData {
         arrangement: "In-Line",
         supportBase: "",
         basin: "",
+        quantity: "1",
+        port: "Brisbane",
         price: "389449",
       },
       {
@@ -163,6 +181,8 @@ export function createInitialCommercialProposal(): CommercialProposalData {
         arrangement: "In-Line",
         supportBase: "",
         basin: "",
+        quantity: "1",
+        port: "Brisbane",
         price: "160590",
       },
     ],

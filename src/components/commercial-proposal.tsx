@@ -4,8 +4,10 @@ import {
   proposalRecipient,
   referenceNumber,
   resolvedCommercialTowers,
+  PORTS,
   SIGNATORIES,
   towerSpecKey,
+  towerTotal,
   type CommercialProposalData,
   type SignatoryId,
   type CommercialTower,
@@ -50,8 +52,9 @@ const TOWER_FIELDS: { key: keyof CommercialTower; label: string; type?: string; 
   { key: "infill", label: "Type Of Infill" },
   { key: "supportBase", label: "Mechanical Support Base", placeholder: "Same as material" },
   { key: "basin", label: "Cold Water Basin", placeholder: "Same as material" },
-  { key: "price", label: "Price (AUD)", type: "number" },
 ];
+
+const OTHER_PORT = "__other";
 
 const currency = new Intl.NumberFormat("en-AU", {
   style: "currency",
@@ -110,7 +113,7 @@ export function CommercialProposal({
       )
     );
 
-  const total = towers.reduce((sum, tower) => sum + (Number(tower.price) || 0), 0);
+  const total = towers.reduce((sum, tower) => sum + (Number(towerTotal(tower)) || 0), 0);
 
   function textInput(label: string, value: string, onValue: (value: string) => void, type = "text") {
     const id = `commercial-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
@@ -217,9 +220,65 @@ export function CommercialProposal({
           <Card key={`${tower.equipment}-${index}`}>
             <CardHeader>
               <CardTitle>{tower.equipment || `Cooling tower ${index + 1}`}</CardTitle>
-              <CardDescription>Equipment details and material price (C&amp;F Brisbane Port).</CardDescription>
+              <CardDescription>Equipment details and material price (C&amp;F {tower.port || "…"} Port).</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 border-b pb-4 sm:col-span-2 sm:grid-cols-3 lg:col-span-3">
+                <div className="grid content-start gap-1.5">
+                  <Label htmlFor={`commercial-tower-${index}-price`}>1.1 Price For Cooling Tower Material (AUD)</Label>
+                  <Input
+                    id={`commercial-tower-${index}-price`}
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="e.g. 389449"
+                    value={tower.price}
+                    onChange={(event) => setTowerField(index, "price", event.target.value)}
+                  />
+                </div>
+                <div className="grid content-start gap-1.5">
+                  <Label htmlFor={`commercial-tower-${index}-quantity`}>Quantity</Label>
+                  <Input
+                    id={`commercial-tower-${index}-quantity`}
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={tower.quantity}
+                    onChange={(event) => setTowerField(index, "quantity", event.target.value)}
+                  />
+                </div>
+                <div className="grid content-start gap-1.5">
+                  <Label htmlFor={`commercial-tower-${index}-port`}>C&amp;F Port (1.2 / 1.3)</Label>
+                  <NativeSelect
+                    id={`commercial-tower-${index}-port`}
+                    value={(PORTS as readonly string[]).includes(tower.port) ? tower.port : OTHER_PORT}
+                    onChange={(event) =>
+                      setTowerField(index, "port", event.target.value === OTHER_PORT ? "" : event.target.value)
+                    }
+                  >
+                    {PORTS.map((port) => (
+                      <option key={port} value={port}>
+                        {port}
+                      </option>
+                    ))}
+                    <option value={OTHER_PORT}>Other…</option>
+                  </NativeSelect>
+                  {!(PORTS as readonly string[]).includes(tower.port) && (
+                    <Input
+                      aria-label="Other port"
+                      placeholder="Type the port name, e.g. Newcastle"
+                      value={tower.port}
+                      onChange={(event) => setTowerField(index, "port", event.target.value)}
+                    />
+                  )}
+                </div>
+                <p className="text-muted-foreground text-sm sm:col-span-3">
+                  1.2 &amp; 1.3 (price × quantity):{" "}
+                  <span className="text-foreground font-semibold">
+                    {tower.price.trim() ? currency.format(Number(towerTotal(tower)) || 0) : "—"}
+                  </span>
+                </p>
+              </div>
               {TOWER_FIELDS.map(({ key, label, type, placeholder }) => (
                 <div key={key} className="grid content-start gap-1.5">
                   <Label htmlFor={`commercial-tower-${index}-${key}`}>

@@ -9,6 +9,7 @@ import {
   referenceNumber,
   resolvedCommercialTowers,
   SIGNATORIES,
+  towerTotal,
   type CommercialTower,
   type SignatoryId,
   SPEC_ROWS,
@@ -147,6 +148,8 @@ function formatTower(tower: CommercialTower, fans: string) {
     supportBase: tower.supportBase.trim() || tower.material,
     basin: tower.basin.trim() || tower.material,
     price: audPrice(tower.price),
+    quantity: tower.quantity.trim() || "1",
+    total: audPrice(towerTotal(tower)),
   };
 }
 
