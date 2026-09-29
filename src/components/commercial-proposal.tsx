@@ -109,14 +109,6 @@ export function CommercialProposal({
       )
     );
 
-  const setScheduleField = (index: number, key: "description" | "duration", value: string) =>
-    updateCommercialField(
-      "schedule",
-      data.commercial.schedule.map((step, stepIndex) =>
-        stepIndex === index ? { ...step, [key]: value } : step
-      )
-    );
-
   const total = towers.reduce((sum, tower) => sum + (Number(towerTotal(tower)) || 0), 0);
 
   function textInput(label: string, value: string, onValue: (value: string) => void, type = "text") {
@@ -340,30 +332,20 @@ export function CommercialProposal({
       </Card>
       {/* Optional items (A spare parts, B supervision rates) are standard: printed from the defaults, not edited here. */}
 
-      <Card>
+      {/* Purchaser responsibilities and the delivery schedule chart are standard: printed from the defaults. */}
+      <Card className="gap-4 py-5">
         <CardHeader>
-          <CardTitle>Purchaser Responsibilities</CardTitle>
-          <CardDescription>Applies when Truwater or its supervisory services are engaged for tower erection.</CardDescription>
+          <CardTitle>Delivery</CardTitle>
+          <CardDescription>Printed as “Delivery Time - …” under the delivery schedule.</CardDescription>
         </CardHeader>
-        <CardContent>
-          {textArea("Purchaser responsibilities (one item per line)", data.commercial.purchaserResponsibilities, (value) => updateCommercialField("purchaserResponsibilities", value), "min-h-40")}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Delivery Schedule</CardTitle>
-          <CardDescription>Edit the total delivery duration, notes and stage estimates.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          {textInput("Delivery time", data.commercial.deliveryTime, (value) => updateCommercialField("deliveryTime", value))}
-          {textInput("Delivery notes", data.commercial.deliveryNotes, (value) => updateCommercialField("deliveryNotes", value))}
-          {data.commercial.schedule.map((step, index) => (
-            <div key={index} className="grid gap-3 border-l-2 border-primary/40 pl-3 sm:grid-cols-[minmax(0,1fr)_8rem]">
-              {textInput(`Stage ${index + 1}`, step.description, (value) => setScheduleField(index, "description", value))}
-              {textInput(`Duration ${index + 1}`, step.duration, (value) => setScheduleField(index, "duration", value))}
-            </div>
-          ))}
+        <CardContent className="grid gap-1.5 sm:max-w-sm">
+          <Label htmlFor="commercial-delivery-time">Delivery Time</Label>
+          <Input
+            id="commercial-delivery-time"
+            placeholder="e.g. 14- 16 Weeks"
+            value={data.commercial.deliveryTime}
+            onChange={(event) => updateCommercialField("deliveryTime", event.target.value)}
+          />
         </CardContent>
       </Card>
 
