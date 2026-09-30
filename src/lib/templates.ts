@@ -170,7 +170,7 @@ function formatTower(tower: CommercialTower, fans: string) {
 const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
 
 /**
- * "Base Cooling Tower Price basis shall be delivered to site in <site>, from <port> Port to <address> in CKD …
+ * "Base Cooling Tower Price basis shall be delivered to site at <site>, from <port> Port to <address> in CKD …
  * four (4) containers …". Sydney and Brisbane have a default site and address; a typed site replaces the name.
  */
 function priceBasis(data: ProposalData, port: string): string {
@@ -181,7 +181,7 @@ function priceBasis(data: ProposalData, port: string): string {
     count !== null && Number.isInteger(count) && count <= 10 ? `${NUMBER_WORDS[count]} (${count})` : data.commercial.containers.trim();
   const route = [`from ${port.trim()} Port`, delivery && `to ${delivery.address}`].filter(Boolean).join(" ");
   return (
-    `Base Cooling Tower Price basis shall be delivered to site in ${site}, ${route} ` +
+    `Base Cooling Tower Price basis shall be delivered to site at ${site}, ${route} ` +
     `in CKD (Complete Knock Down) form in ${containers} ${count === 1 ? "container" : "containers"} by flatbed container truck.`
   );
 }

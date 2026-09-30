@@ -361,7 +361,7 @@ export function CommercialProposal({
             />
           </div>
           <div className="col-span-2 grid content-start gap-1.5 sm:col-span-1">
-            <Label htmlFor="commercial-delivery-site">Delivered To Site In</Label>
+            <Label htmlFor="commercial-delivery-site">Delivered To Site At</Label>
             <Input
               id="commercial-delivery-site"
               placeholder={delivery?.site || data.projectAddress || "Site name"}
