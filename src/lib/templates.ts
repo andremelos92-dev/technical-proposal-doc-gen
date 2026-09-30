@@ -126,9 +126,14 @@ function plainNumber(value: string): number | null {
   return /^\d+(\.\d+)?$/.test(cleaned) ? Number(cleaned) : null;
 }
 
+/** Writes the kilowatt unit properly: "15 kw", "15kw", "15 KW" -> "15 kW". */
+function kilowatts(value: string): string {
+  return value.replace(/(\d)\s*kw\b/gi, "$1 kW").replace(/\bkw\b/gi, "kW");
+}
+
 /**
  * Pricing table values for one tower. Plain numbers typed in the RFQ get the units used in the
- * proposal ("3" -> "3 cells", "73" L/s -> "262.8 m3/h / 73 L/s", "35" -> "35.0 °C", "11" -> "3 x 11 kw").
+ * proposal ("3" -> "3 cells", "73" L/s -> "73 L/s", "35" -> "35.0 °C", "11" -> "3 x 11 kW").
  */
 function formatTower(tower: CommercialTower, fans: string) {
   const cells = plainNumber(tower.cells);
@@ -139,16 +144,23 @@ function formatTower(tower: CommercialTower, fans: string) {
     const n = plainNumber(value);
     return n === null ? value : `${n.toFixed(1)} °C`;
   };
+  // "FRP" on the RFQ is printed as the full material name.
+  const material = /^frp$/i.test(tower.material.trim()) ? "Pultruded FRP" : tower.material;
+  // Likewise "PVC" for the fill.
+  const infill = /^pvc$/i.test(tower.infill.trim()) ? "PVC Film Fill" : tower.infill;
   return {
     ...tower,
+    material,
+    infill,
     cells: cells === null ? tower.cells : `${cells} ${cells === 1 ? "cell" : "cells"}`,
-    flowRate: flow === null ? tower.flowRate : `${(flow * 3.6).toFixed(1)} m3/h / ${NUMBER.format(flow)} L/s`,
+    // Exactly as typed on the RFQ; plain numbers just get their unit.
+    flowRate: flow === null ? tower.flowRate : `${tower.flowRate.trim()} L/s`,
     hotTemperature: temperature(tower.hotTemperature),
     coldTemperature: temperature(tower.coldTemperature),
     wetBulb: temperature(tower.wetBulb),
-    motor: kw === null ? tower.motor : count ? `${count} x ${NUMBER.format(kw)} kw` : `${NUMBER.format(kw)} kw`,
-    supportBase: tower.supportBase.trim() || tower.material,
-    basin: tower.basin.trim() || tower.material,
+    motor: kw === null ? kilowatts(tower.motor) : count ? `${count} x ${NUMBER.format(kw)} kW` : `${NUMBER.format(kw)} kW`,
+    supportBase: tower.supportBase.trim() || material,
+    basin: tower.basin.trim() || material,
     price: audPrice(tower.price),
     quantity: tower.quantity.trim() || "1",
     total: audPrice(towerTotal(tower)),
