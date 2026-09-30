@@ -22,12 +22,12 @@ function personOptions(column: PersonColumn, current: string): readonly string[]
 }
 
 const REVISION_FIELDS: { key: keyof Revision; label: string; type?: string; width?: string }[] = [
-  { key: "rev", label: "Rev.", width: "w-14" },
-  { key: "date", label: "Date", type: "date", width: "w-38" },
-  { key: "status", label: "Status", width: "w-28" },
-  { key: "preparedBy", label: "Prepared By", width: "w-36" },
-  { key: "checkedBy", label: "Checked By", width: "w-36" },
-  { key: "approvedBy", label: "Approved By", width: "w-36" },
+  { key: "rev", label: "Rev.", width: "w-12" },
+  { key: "date", label: "Date", type: "date", width: "w-36" },
+  { key: "status", label: "Status", width: "w-24" },
+  { key: "preparedBy", label: "Prepared By", width: "w-32" },
+  { key: "checkedBy", label: "Checked By", width: "w-32" },
+  { key: "approvedBy", label: "Approved By", width: "w-32" },
   { key: "remarks", label: "Remarks" },
 ];
 
@@ -47,6 +47,7 @@ export function RevisionsEditor({
       <NativeSelect
         id={id}
         aria-label={`${column.label} (row ${index + 1})`}
+        className="h-8 md:text-sm"
         value={revision[column.key]}
         onChange={(event) => setValue(index, column.key, event.target.value)}
       >
@@ -61,6 +62,7 @@ export function RevisionsEditor({
       <Input
         id={id}
         aria-label={`${column.label} (row ${index + 1})`}
+        className="h-8 md:text-sm"
         type={column.type}
         value={revision[column.key]}
         onChange={(event) => setValue(index, column.key, event.target.value)}
@@ -72,6 +74,7 @@ export function RevisionsEditor({
       type="button"
       variant="ghost"
       size="icon"
+      className="size-8"
       aria-label={`Remove revision ${revision.rev || index + 1}`}
       onClick={() => onChange(revisions.filter((_, i) => i !== index))}
     >
@@ -81,11 +84,11 @@ export function RevisionsEditor({
 
   return (
     <div className="grid gap-2">
-      <Label>Revisions</Label>
+      <Label className="text-xs">Revisions</Label>
       {/* Phones: one compact block per revision instead of the wide table. */}
       <div className="grid gap-2 sm:hidden">
         {revisions.map((revision, index) => (
-          <div key={index} className="grid grid-cols-2 gap-2 rounded-lg border p-3">
+          <div key={index} className="grid grid-cols-2 gap-1.5 rounded-lg border p-2">
             {REVISION_FIELDS.map((column) => (
               <div
                 key={column.key}
@@ -100,15 +103,15 @@ export function RevisionsEditor({
         ))}
       </div>
       <div className="hidden overflow-x-auto sm:block">
-        <table className="w-full min-w-[880px] table-fixed border-separate border-spacing-1 text-sm">
+        <table className="w-full min-w-[760px] table-fixed border-separate border-spacing-x-1 border-spacing-y-0.5 text-sm">
           <thead>
-            <tr className="text-muted-foreground text-left">
+            <tr className="text-muted-foreground text-left text-xs">
               {REVISION_FIELDS.map((column) => (
                 <th key={column.key} className={cn("font-medium", column.width)}>
                   {column.label}
                 </th>
               ))}
-              <th className="w-9">
+              <th className="w-8">
                 <span className="sr-only">Remove</span>
               </th>
             </tr>
@@ -125,11 +128,12 @@ export function RevisionsEditor({
           </tbody>
         </table>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <Button
           type="button"
           variant="outline"
           size="sm"
+          className="h-7 text-xs"
           onClick={() => onChange([...revisions, createRevision(String(revisions.length))])}
           disabled={revisions.length >= MAX_REVISIONS}
         >

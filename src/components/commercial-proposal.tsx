@@ -119,38 +119,40 @@ export function CommercialProposal({
   return (
     <div className="grid min-w-0 grid-cols-1 gap-4 sm:gap-6" role="tabpanel" aria-label="Commercial Proposal">
       <Card className={CARD}>
-        <CardHeader className={PAD}>
+        <CardHeader className={cn(PAD, "flex flex-wrap items-baseline gap-x-2 gap-y-0.5")}>
           <CardTitle>Cover</CardTitle>
-          <CardDescription>Copied from the RFQ &amp; Technical Proposal tab.</CardDescription>
+          <CardDescription className="text-xs">Copied from the RFQ &amp; Technical Proposal tab.</CardDescription>
         </CardHeader>
-        <CardContent className={cn(PAD, "grid gap-5")}>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3 lg:grid-cols-3">
-            <Detail label="Project" value={title} className="col-span-2 lg:col-span-1" />
-            <Detail label="Client" value={recipient} className="col-span-2 lg:col-span-1" />
+        <CardContent className={cn(PAD, "grid gap-3")}>
+          <div className="bg-muted/40 grid grid-cols-2 gap-x-4 gap-y-2 rounded-lg border px-3 py-2 lg:grid-cols-6">
+            <Detail label="Project" value={title} className="col-span-2" />
+            <Detail label="Client" value={recipient} className="col-span-2" />
             <Detail
               label="Project address"
               value={data.projectAddress || "Project address from Documents form"}
-              className="col-span-2 lg:col-span-1"
+              className="col-span-2"
             />
             <Detail label="TTA quote no." value={data.quoteNumber || "—"} />
             <Detail label="Proposal date" value={formatDate(data.date)} />
-            <Detail label="Reference no." value={referenceNumber(data) || "From quote no. and date"} />
-            <div className="col-span-2 grid content-start gap-1.5">
-              <Label htmlFor="commercial-attention">ATTN.</Label>
+            <Detail label="Reference no." value={referenceNumber(data) || "From quote no. and date"} className="col-span-2" />
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid content-start gap-1">
+              <Label htmlFor="commercial-attention" className="text-xs">ATTN.</Label>
               <Input
                 id="commercial-attention"
                 placeholder="e.g. Aaron Hughes & Cale Watson"
+                className="h-8 md:text-sm"
                 value={data.commercial.attention}
                 onChange={(event) => updateCommercialField("attention", event.target.value)}
               />
             </div>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
             {(["signature1", "signature2"] as const).map((key, index) => (
-              <div key={key} className="grid content-start gap-1.5">
-                <Label htmlFor={`commercial-${key}`}>Signature {index + 1}</Label>
+              <div key={key} className="grid content-start gap-1">
+                <Label htmlFor={`commercial-${key}`} className="text-xs">Signature {index + 1}</Label>
                 <NativeSelect
                   id={`commercial-${key}`}
+                  className="h-8 md:text-sm"
                   value={data.commercial[key]}
                   onChange={(event) => updateCommercialField(key, event.target.value as SignatoryId)}
                 >
@@ -387,8 +389,8 @@ export function CommercialProposal({
 function Detail({ label, value, className }: { label: string; value: string; className?: string }) {
   return (
     <div className={cn("min-w-0", className)}>
-      <p className="text-muted-foreground text-xs font-medium">{label}</p>
-      <p className="mt-0.5 text-sm leading-snug break-words">{value}</p>
+      <p className="text-muted-foreground text-[11px] font-medium">{label}</p>
+      <p className="text-sm leading-snug break-words">{value}</p>
     </div>
   );
 }
