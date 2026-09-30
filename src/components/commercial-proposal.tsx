@@ -9,7 +9,6 @@ import {
   SIGNATORIES,
   type FlowType,
   towerSpecKey,
-  towerTotal,
   type CommercialProposalData,
   type SignatoryId,
   type CommercialTower,
@@ -67,11 +66,6 @@ const PAD = "px-4 sm:px-6";
 
 const OTHER_PORT = "__other";
 
-const currency = new Intl.NumberFormat("en-AU", {
-  style: "currency",
-  currency: "AUD",
-  minimumFractionDigits: 2,
-});
 
 export function CommercialProposal({
   data,
@@ -238,12 +232,7 @@ export function CommercialProposal({
                     />
                   )}
                 </div>
-                <p className="text-muted-foreground col-span-2 flex items-baseline justify-between gap-2 text-sm sm:col-span-3">
-                  1.2 &amp; 1.3 (price × qty)
-                  <span className="text-foreground font-semibold">
-                    {tower.price.trim() ? currency.format(Number(towerTotal(tower)) || 0) : "—"}
-                  </span>
-                </p>
+                {/* The 1.2 / 1.3 amounts (price × qty) are only printed in the document. */}
               </div>
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
                 {TOWER_FIELDS.map(({ key, label, placeholder, wide }) => {
