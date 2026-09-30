@@ -20,6 +20,7 @@ import {
   proposalRecipient,
   referenceNumber,
   SPEC_ROWS,
+  type FlowType,
   type ProposalData,
   type Recipient,
   type SpecKey,
@@ -333,6 +334,51 @@ export function ProposalForm() {
                   )}
                 </div>
               )}
+              {(() => {
+                // Printed in this tower type's pricing schedule description ("… Induced Draft, Counterflow, …").
+                // Tower type 1 shares it with the Tower Type on the Technical Proposal cover.
+                const flowType = index === 0 ? data.flowType : (data.commercial.towers[index]?.flowType ?? "");
+                const setFlowType = (value: FlowType) =>
+                  setData((prev) =>
+                    index === 0
+                      ? { ...prev, flowType: value }
+                      : {
+                          ...prev,
+                          commercial: {
+                            ...prev.commercial,
+                            towers: prev.commercial.towers.map((tower, i) =>
+                              i === index ? { ...tower, flowType: value } : tower
+                            ),
+                          },
+                        }
+                  );
+                return (
+                  // Same column widths as a left-column spec row, so it lines up with the fields below.
+                  <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] items-center gap-3 sm:w-1/2 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] sm:pr-4">
+                    <Label className="block leading-snug">
+                      Counterflow / Crossflow
+                      {!flowType && (
+                        <span className="text-destructive ml-1.5 text-xs font-normal whitespace-nowrap">Select one</span>
+                      )}
+                    </Label>
+                    <div className="flex gap-2">
+                      {FLOW_TYPES.map((type) => (
+                        <Button
+                          key={type}
+                          type="button"
+                          size="sm"
+                          className="flex-1"
+                          variant={flowType === type ? "default" : "outline"}
+                          aria-pressed={flowType === type}
+                          onClick={() => setFlowType(type)}
+                        >
+                          {type}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
               {/* Fills down the left column first, so the order matches the RFQ table. */}
               <div className="grid gap-x-8 gap-y-2 sm:grid-flow-col sm:grid-cols-2 sm:grid-rows-8">
                 {SPEC_ROWS.map((row) => {
