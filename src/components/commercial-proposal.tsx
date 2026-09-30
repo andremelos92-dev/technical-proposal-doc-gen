@@ -8,13 +8,13 @@ import {
   PORTS,
   SIGNATORIES,
   type FlowType,
+  towerSpec,
   towerSpecKey,
   towerTotal,
   type CommercialProposalData,
   type SignatoryId,
   type CommercialTower,
   type ProposalData,
-  type SpecKey,
 } from "@/lib/proposal";
 import { RevisionsEditor } from "@/components/revisions-editor";
 import { SaveToHistory } from "@/components/save-to-history";
@@ -41,9 +41,9 @@ type CommercialProposalProps = {
 
 const TOWER_FIELDS: { key: keyof CommercialTower; label: string; type?: string; placeholder?: string }[] = [
   { key: "equipment", label: "Equipment No." },
-  { key: "model", label: "Cooling Tower Model", placeholder: "ECF1212F4-1B-1" },
+  { key: "model", label: "Cooling Tower Model", placeholder: "e.g. ECF1212F4-1B-1" },
   { key: "cells", label: "No. Of Cells" },
-  { key: "arrangement", label: "Arrangement", placeholder: "In-Line" },
+  { key: "arrangement", label: "Arrangement", placeholder: "e.g. In-Line" },
   { key: "flowRate", label: "Design Flowrate", placeholder: "e.g. 73 (L/s)" },
   { key: "hotTemperature", label: "Hot (Inlet) Water Temp", placeholder: "e.g. 35" },
   { key: "coldTemperature", label: "Cold (Outlet) Water Temp", placeholder: "e.g. 29.5" },
@@ -80,21 +80,15 @@ export function CommercialProposal({
   ) => updateCommercial({ ...data.commercial, [key]: value });
   const towers = resolvedCommercialTowers(data);
 
-  const setTowerField = (index: number, key: keyof CommercialTower, value: string) => {
-    if (index === 0 && key === "model") {
-      onChange({ towerModel: value });
-      return;
-    }
-    // Fields linked to this tower type's specification are edited there, so both stay the same.
+  // A field is copied (read-only) when the RFQ / Technical Proposal has a value for it;
+  // otherwise it stays editable and is saved on the tower itself.
+  const sourceValue = (index: number, key: keyof CommercialTower) => {
+    if (index === 0 && key === "model") return data.towerModel.trim();
     const specKey = towerSpecKey(key);
-    if (specKey) {
-      if (index === 0) onChange({ spec: { ...data.spec, [specKey]: value } });
-      else
-        onChange({
-          extraSpecs: data.extraSpecs.map((spec, i) => (i === index - 1 ? { ...spec, [specKey]: value } : spec)),
-        });
-      return;
-    }
+    return specKey ? towerSpec(data, index)[specKey].trim() : "";
+  };
+
+  const setTowerField = (index: number, key: keyof CommercialTower, value: string) => {
     updateCommercialField(
       "towers",
       data.commercial.towers.map((tower, towerIndex) =>
@@ -258,27 +252,33 @@ export function CommercialProposal({
                   </span>
                 </p>
               </div>
-              {TOWER_FIELDS.map(({ key, label, type, placeholder }) => (
-                <div key={key} className="grid content-start gap-1.5">
-                  <Label htmlFor={`commercial-tower-${index}-${key}`}>
-                    {label}
-                    {(towerSpecKey(key) || (index === 0 && key === "model")) && (
-                      <span className="text-primary text-[10px] font-semibold">
-                        {key === "model" ? "TECH PROP" : index === 0 ? "RFQ" : `SPEC ${index + 1}`}
-                      </span>
-                    )}
-                  </Label>
-                  <Input
-                    id={`commercial-tower-${index}-${key}`}
-                    placeholder={placeholder}
-                    type={type ?? "text"}
-                    min={type === "number" ? "0" : undefined}
-                    step={type === "number" ? "0.01" : undefined}
-                    value={tower[key]}
-                    onChange={(event) => setTowerField(index, key, event.target.value)}
-                  />
-                </div>
-              ))}
+              {TOWER_FIELDS.map(({ key, label, type, placeholder }) => {
+                const copied = Boolean(sourceValue(index, key));
+                return (
+                  <div key={key} className="grid content-start gap-1.5">
+                    <Label htmlFor={`commercial-tower-${index}-${key}`}>
+                      {label}
+                      {copied && (
+                        <span className="text-primary text-[10px] font-semibold">
+                          {key === "model" ? "TECH PROP" : index === 0 ? "RFQ" : `SPEC ${index + 1}`}
+                        </span>
+                      )}
+                    </Label>
+                    <Input
+                      id={`commercial-tower-${index}-${key}`}
+                      placeholder={placeholder}
+                      type={type ?? "text"}
+                      min={type === "number" ? "0" : undefined}
+                      step={type === "number" ? "0.01" : undefined}
+                      value={tower[key]}
+                      readOnly={copied}
+                      title={copied ? "Copied from the RFQ / Technical Proposal – edit it there" : undefined}
+                      className={copied ? "bg-muted text-muted-foreground cursor-default" : undefined}
+                      onChange={(event) => setTowerField(index, key, event.target.value)}
+                    />
+                  </div>
+                );
+              })}
             </CardContent>
           </Card>
         ))}

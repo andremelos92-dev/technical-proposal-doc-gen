@@ -101,7 +101,7 @@ export function createBlankTower(): CommercialTower {
     driveType: "",
     motor: "",
     infill: "",
-    arrangement: "In-Line",
+    arrangement: "",
     supportBase: "",
     basin: "",
     quantity: "1",
@@ -173,28 +173,7 @@ export function createInitialCommercialProposal(): CommercialProposalData {
     attention: "",
     signature1: "craig",
     signature2: "kenx",
-    towers: [
-      {
-        flowType: "Counterflow",
-        equipment: "CT1 & CT2",
-        model: "",
-        cells: "3 cells",
-        flowRate: "507.8 m3/h / 141.05 L/s",
-        hotTemperature: "35.0 °C",
-        coldTemperature: "29.6 °C",
-        wetBulb: "26.8 °C",
-        material: "SS316",
-        driveType: "Belt & Pulley",
-        motor: "3 x 11 kw (1 motor per cell)",
-        infill: "PVC Film Fill",
-        arrangement: "In-Line",
-        supportBase: "",
-        basin: "",
-        quantity: "1",
-        port: "Brisbane",
-        price: "389449",
-      },
-    ],
+    towers: [createBlankTower()],
     scope: [
       { description: "SS316 Frameworks", responsibility: "Truwater" },
       { description: "SS316 Cold Water Basin Supporting Framework", responsibility: "Truwater" },
@@ -311,8 +290,8 @@ export function resolvedCommercialTowers(data: TowerSource) {
       if (specKey) (resolved as Record<string, string>)[key] = spec[specKey].trim() || String(tower[key]);
     }
     if (index === 0) {
-      // Tower 1's model is always the Technical Proposal cover's Model.
-      resolved.model = data.towerModel;
+      // Tower 1's model is the Technical Proposal cover's Model when filled.
+      resolved.model = data.towerModel.trim() || tower.model;
       resolved.flowType = data.flowType;
     }
     return resolved;
