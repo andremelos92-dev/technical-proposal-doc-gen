@@ -280,18 +280,18 @@ export function towerSpec(data: Pick<ProposalData, "spec" | "extraSpecs">, index
 }
 
 export function resolvedCommercialTowers(data: TowerSource) {
-  // Specification values win when filled; otherwise the Commercial tab's own value is used.
+  // Spec-linked fields always come from the specification; they aren't edited on the Commercial tab.
   return data.commercial.towers.map((tower, index) => {
     const spec = towerSpec(data, index);
     const resolved = { ...tower };
     for (const key of Object.keys(tower) as (keyof CommercialTower)[]) {
       const specKey = towerSpecKey(key);
       // Spec-linked fields are all text fields.
-      if (specKey) (resolved as Record<string, string>)[key] = spec[specKey].trim() || String(tower[key]);
+      if (specKey) (resolved as Record<string, string>)[key] = spec[specKey].trim();
     }
     if (index === 0) {
-      // Tower 1's model is the Technical Proposal cover's Model when filled.
-      resolved.model = data.towerModel.trim() || tower.model;
+      // Tower 1's model is always the Technical Proposal cover's Model.
+      resolved.model = data.towerModel.trim();
       resolved.flowType = data.flowType;
     }
     return resolved;

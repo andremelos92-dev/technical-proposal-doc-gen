@@ -8,7 +8,6 @@ import {
   PORTS,
   SIGNATORIES,
   type FlowType,
-  towerSpec,
   towerSpecKey,
   towerTotal,
   type CommercialProposalData,
@@ -86,12 +85,11 @@ export function CommercialProposal({
   ) => updateCommercial({ ...data.commercial, [key]: value });
   const towers = resolvedCommercialTowers(data);
 
-  // A field is copied (read-only) when the RFQ / Technical Proposal has a value for it;
-  // otherwise it stays editable and is saved on the tower itself.
-  const sourceValue = (index: number, key: keyof CommercialTower) => {
-    if (index === 0 && key === "model") return data.towerModel.trim();
-    const specKey = towerSpecKey(key);
-    return specKey ? towerSpec(data, index)[specKey].trim() : "";
+  // Where a field is filled in on the RFQ / Technical Proposal, if anywhere. Those fields are read-only here.
+  const fieldSource = (index: number, key: keyof CommercialTower) => {
+    if (index === 0 && key === "model") return "Technical Proposal";
+    if (!towerSpecKey(key)) return null;
+    return index === 0 ? "RFQ" : `Specification ${index + 1}`;
   };
 
   const setTowerField = (index: number, key: keyof CommercialTower, value: string) => {
@@ -264,7 +262,7 @@ export function CommercialProposal({
               </div>
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
                 {TOWER_FIELDS.map(({ key, label, placeholder, wide }) => {
-                  const copied = Boolean(sourceValue(index, key));
+                  const source = fieldSource(index, key);
                   return (
                     <div
                       key={key}
@@ -272,21 +270,30 @@ export function CommercialProposal({
                     >
                       <Label htmlFor={`commercial-tower-${index}-${key}`} className="text-xs sm:text-sm">
                         {label}
-                        {copied && (
+                        {source && (
                           <span className="text-primary text-[10px] font-semibold">
                             {key === "model" ? "TECH PROP" : index === 0 ? "RFQ" : `SPEC ${index + 1}`}
                           </span>
                         )}
                       </Label>
-                      <Input
-                        id={`commercial-tower-${index}-${key}`}
-                        placeholder={placeholder}
-                        value={tower[key]}
-                        readOnly={copied}
-                        title={copied ? "Copied from the RFQ / Technical Proposal – edit it there" : undefined}
-                        className={copied ? "bg-muted text-muted-foreground cursor-default" : undefined}
-                        onChange={(event) => setTowerField(index, key, event.target.value)}
-                      />
+                      {source ? (
+                        <Input
+                          id={`commercial-tower-${index}-${key}`}
+                          readOnly
+                          tabIndex={-1}
+                          placeholder={`Fill in on the ${source}`}
+                          title={`From the ${source} – change it there`}
+                          className="bg-muted cursor-default placeholder:italic focus-visible:ring-0"
+                          value={tower[key]}
+                        />
+                      ) : (
+                        <Input
+                          id={`commercial-tower-${index}-${key}`}
+                          placeholder={placeholder}
+                          value={tower[key]}
+                          onChange={(event) => setTowerField(index, key, event.target.value)}
+                        />
+                      )}
                     </div>
                   );
                 })}
