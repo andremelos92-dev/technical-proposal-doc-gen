@@ -29,8 +29,8 @@ export type Revision = {
 };
 
 export type CommercialTower = {
-  /** Counterflow or Crossflow. Tower 1 always follows the Technical Proposal's tower type. */
-  flowType: FlowType;
+  /** Counterflow or Crossflow; blank until chosen. Tower 1 always follows the Technical Proposal's tower type. */
+  flowType: FlowType | "";
   equipment: string;
   model: string;
   cells: string;
@@ -89,7 +89,7 @@ export const MAX_TOWER_TYPES = 5;
 
 export function createBlankTower(): CommercialTower {
   return {
-    flowType: "Counterflow",
+    flowType: "",
     equipment: "",
     model: "",
     cells: "",
@@ -264,7 +264,7 @@ export type ProposalData = {
   spec: Record<SpecKey, string>;
   /** Specifications for tower types 2, 3… (each gets its own pricing schedule). */
   extraSpecs: Record<SpecKey, string>[];
-  flowType: FlowType;
+  flowType: FlowType | "";
   towerModel: string;
   recipient: Recipient;
   otherRecipient: string;
@@ -383,7 +383,7 @@ export function createInitialProposal(): ProposalData {
     folderLink: "",
     spec: createEmptySpec(),
     extraSpecs: [],
-    flowType: "Counterflow",
+    flowType: "",
     towerModel: "",
     recipient: "customer",
     otherRecipient: "",

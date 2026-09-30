@@ -123,6 +123,16 @@ export function ProposalForm() {
   );
 
   async function handleGenerate(kind: DocumentKind) {
+    // The tower type starts blank so it's always chosen on purpose.
+    if (kind !== "rfq" && !data.flowType) {
+      setError("Select the Tower Type (Counterflow or Crossflow) on the RFQ & Technical Proposal tab first.");
+      return;
+    }
+    const untyped = kind === "commercial" ? data.commercial.towers.findIndex((t, i) => i > 0 && !t.flowType) : -1;
+    if (untyped > 0) {
+      setError(`Select the Type (Counterflow or Crossflow) for cooling tower ${untyped + 1}.`);
+      return;
+    }
     setGenerating(kind);
     setError(null);
     try {
@@ -402,7 +412,10 @@ export function ProposalForm() {
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="grid gap-2">
-              <Label>Tower Type</Label>
+              <Label>
+                Tower Type
+                {!data.flowType && <span className="text-destructive text-xs font-normal">Select one</span>}
+              </Label>
               <div className="flex gap-2">
                 {FLOW_TYPES.map((flowType) => (
                   <Button

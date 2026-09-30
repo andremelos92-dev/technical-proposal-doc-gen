@@ -269,6 +269,9 @@ export function CommercialProposal({
                           value={tower.flowType}
                           onChange={(event) => setTowerField(index, "flowType", event.target.value as FlowType)}
                         >
+                          <option value="" disabled>
+                            Select…
+                          </option>
                           {FLOW_TYPES.map((type) => (
                             <option key={type} value={type}>
                               {type}
