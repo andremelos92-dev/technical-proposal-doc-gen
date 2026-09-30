@@ -9,6 +9,7 @@ import {
   SIGNATORIES,
   type FlowType,
   towerSpecKey,
+  towerTotal,
   type CommercialProposalData,
   type SignatoryId,
   type CommercialTower,
@@ -66,6 +67,11 @@ const PAD = "px-4 sm:px-6";
 
 const OTHER_PORT = "__other";
 
+const currency = new Intl.NumberFormat("en-AU", {
+  style: "currency",
+  currency: "AUD",
+  minimumFractionDigits: 2,
+});
 
 export function CommercialProposal({
   data,
@@ -177,7 +183,7 @@ export function CommercialProposal({
               <CardTitle className="min-w-0 truncate">{tower.equipment || `Cooling tower ${index + 1}`}</CardTitle>
             </CardHeader>
             <CardContent className={cn(PAD, "grid gap-4")}>
-              <div className="bg-muted/40 grid grid-cols-2 gap-3 rounded-lg border p-3 sm:grid-cols-[minmax(0,2fr)_6rem_minmax(0,1.5fr)]">
+              <div className="bg-muted/40 grid grid-cols-2 gap-3 rounded-lg border p-3 sm:grid-cols-[minmax(0,1.5fr)_5rem_minmax(0,1.5fr)_minmax(0,1.2fr)]">
                 <div className="col-span-2 grid content-start gap-1.5 sm:col-span-1">
                   <Label htmlFor={`commercial-tower-${index}-price`}>1.1 Material price (AUD)</Label>
                   <Input
@@ -206,6 +212,17 @@ export function CommercialProposal({
                   />
                 </div>
                 <div className="grid content-start gap-1.5">
+                  <Label htmlFor={`commercial-tower-${index}-total`}>Total (AUD)</Label>
+                  <Input
+                    id={`commercial-tower-${index}-total`}
+                    readOnly
+                    tabIndex={-1}
+                    placeholder="Price × qty"
+                    className="bg-muted cursor-default font-semibold focus-visible:ring-0"
+                    value={tower.price.trim() ? currency.format(Number(towerTotal(tower)) || 0) : ""}
+                  />
+                </div>
+                <div className="col-span-2 grid content-start gap-1.5 sm:col-span-1">
                   <Label htmlFor={`commercial-tower-${index}-port`}>C&amp;F Port</Label>
                   <NativeSelect
                     id={`commercial-tower-${index}-port`}
@@ -232,7 +249,6 @@ export function CommercialProposal({
                     />
                   )}
                 </div>
-                {/* The 1.2 / 1.3 amounts (price × qty) are only printed in the document. */}
               </div>
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
                 {TOWER_FIELDS.map(({ key, label, placeholder, wide }) => {
