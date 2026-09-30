@@ -4,6 +4,7 @@ import PizZip from "pizzip";
 import {
   formatDate,
   MAX_REVISIONS,
+  PORT_DELIVERY,
   projectTitle,
   proposalRecipient,
   referenceNumber,
@@ -156,15 +157,20 @@ function formatTower(tower: CommercialTower, fans: string) {
 
 const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
 
-/** "Base Cooling Tower Price basis shall be delivered to site at, <site> from the <port> Port in CKD … two (2) container …" */
+/**
+ * "Base Cooling Tower Price basis shall be delivered to site in <site>, from <port> Port to <address> in CKD …
+ * four (4) containers …". Sydney and Brisbane have a default site and address; a typed site replaces the name.
+ */
 function priceBasis(data: ProposalData, port: string): string {
-  const site = data.commercial.deliverySite.trim() || data.projectAddress.trim();
+  const delivery = PORT_DELIVERY[port.trim()];
+  const site = data.commercial.deliverySite.trim() || delivery?.site || data.projectAddress.trim();
   const count = plainNumber(data.commercial.containers);
   const containers =
     count !== null && Number.isInteger(count) && count <= 10 ? `${NUMBER_WORDS[count]} (${count})` : data.commercial.containers.trim();
+  const route = [`from ${port.trim()} Port`, delivery && `to ${delivery.address}`].filter(Boolean).join(" ");
   return (
-    `Base Cooling Tower Price basis shall be delivered to site at, ${site} from the ${port.trim()} Port ` +
-    `in CKD (Complete Knock Down) form in ${containers} container by flatbed container truck.`
+    `Base Cooling Tower Price basis shall be delivered to site in ${site}, ${route} ` +
+    `in CKD (Complete Knock Down) form in ${containers} ${count === 1 ? "container" : "containers"} by flatbed container truck.`
   );
 }
 

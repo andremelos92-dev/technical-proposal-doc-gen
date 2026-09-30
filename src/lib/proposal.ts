@@ -66,6 +66,15 @@ export function towerTotal(tower: Pick<CommercialTower, "price" | "quantity">): 
 /** Ports offered for the 1.2 / 1.3 pricing lines; any other port can be typed in. */
 export const PORTS = ["Brisbane", "Sydney", "Melbourne", "Adelaide", "Fremantle", "Darwin"] as const;
 
+/** Where goods from a port are delivered in the price basis: the default site name and its address. */
+export const PORT_DELIVERY: Partial<Record<string, { site: string; address: string }>> = {
+  Sydney: {
+    site: "Complete Cooling Towers Service and Spares Pty Ltd",
+    address: "Unit 1/3 Jayelem Crescent, Padstow NSW 2211",
+  },
+  Brisbane: { site: "Cooling Towers Solutions Pty Ltd", address: "1/26 Octal Street, Yatala Qld 4207" },
+};
+
 /** Tower fields filled from that tower type's Cooling Tower Specification. */
 const TOWER_SPECS: Partial<Record<keyof CommercialTower, SpecKey>> = {
   cells: "numberOfCells",

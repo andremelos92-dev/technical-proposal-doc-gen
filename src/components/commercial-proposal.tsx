@@ -6,6 +6,7 @@ import {
   resolvedCommercialTowers,
   FLOW_TYPES,
   PORTS,
+  PORT_DELIVERY,
   SIGNATORIES,
   type FlowType,
   towerSpecKey,
@@ -88,6 +89,8 @@ export function CommercialProposal({
     value: CommercialProposalData[K]
   ) => updateCommercial({ ...data.commercial, [key]: value });
   const towers = resolvedCommercialTowers(data);
+  const port = towers[0]?.port.trim() ?? "";
+  const delivery = PORT_DELIVERY[port];
 
   // Where a field is filled in on the RFQ / Technical Proposal, if anywhere. Those fields are read-only here.
   const fieldSource = (index: number, key: keyof CommercialTower) => {
@@ -358,16 +361,19 @@ export function CommercialProposal({
             />
           </div>
           <div className="col-span-2 grid content-start gap-1.5 sm:col-span-1">
-            <Label htmlFor="commercial-delivery-site">Delivered To Site At</Label>
+            <Label htmlFor="commercial-delivery-site">Delivered To Site In</Label>
             <Input
               id="commercial-delivery-site"
-              placeholder={data.projectAddress || "Blank = the project address"}
+              placeholder={delivery?.site || data.projectAddress || "Site name"}
               value={data.commercial.deliverySite}
               onChange={(event) => updateCommercialField("deliverySite", event.target.value)}
             />
           </div>
           <p className="text-muted-foreground col-span-2 text-xs sm:col-span-3">
-            Blank site = the project address. The port follows tower 1&apos;s C&amp;F port ({towers[0]?.port || "…"}).
+            {delivery
+              ? `Prints “… from ${port} Port to ${delivery.address} …”. Blank site = ${delivery.site}.`
+              : `Prints “… from ${port || "…"} Port …”. Blank site = the project address.`}{" "}
+            The port follows tower 1&apos;s C&amp;F port.
           </p>
         </CardContent>
       </Card>
