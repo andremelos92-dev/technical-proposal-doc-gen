@@ -42,10 +42,64 @@ export function RevisionsEditor({
   const setValue = (index: number, key: keyof Revision, value: string) =>
     onChange(revisions.map((revision, i) => (i === index ? { ...revision, [key]: value } : revision)));
 
+  const renderField = (revision: Revision, index: number, column: (typeof REVISION_FIELDS)[number], id?: string) =>
+    isPersonColumn(column.key) ? (
+      <NativeSelect
+        id={id}
+        aria-label={`${column.label} (row ${index + 1})`}
+        value={revision[column.key]}
+        onChange={(event) => setValue(index, column.key, event.target.value)}
+      >
+        <option value="">–</option>
+        {personOptions(column.key, revision[column.key]).map((name) => (
+          <option key={name} value={name}>
+            {name}
+          </option>
+        ))}
+      </NativeSelect>
+    ) : (
+      <Input
+        id={id}
+        aria-label={`${column.label} (row ${index + 1})`}
+        type={column.type}
+        value={revision[column.key]}
+        onChange={(event) => setValue(index, column.key, event.target.value)}
+      />
+    );
+
+  const removeButton = (revision: Revision, index: number) => (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      aria-label={`Remove revision ${revision.rev || index + 1}`}
+      onClick={() => onChange(revisions.filter((_, i) => i !== index))}
+    >
+      <Trash2 />
+    </Button>
+  );
+
   return (
     <div className="grid gap-2">
       <Label>Revisions</Label>
-      <div className="overflow-x-auto">
+      {/* Phones: one compact block per revision instead of the wide table. */}
+      <div className="grid gap-2 sm:hidden">
+        {revisions.map((revision, index) => (
+          <div key={index} className="grid grid-cols-2 gap-2 rounded-lg border p-3">
+            {REVISION_FIELDS.map((column) => (
+              <div
+                key={column.key}
+                className={cn("grid min-w-0 gap-1", column.key === "remarks" && "col-span-2")}
+              >
+                <span className="text-muted-foreground text-xs font-medium">{column.label}</span>
+                {renderField(revision, index, column)}
+              </div>
+            ))}
+            <div className="col-span-2 -mb-1 flex justify-end">{removeButton(revision, index)}</div>
+          </div>
+        ))}
+      </div>
+      <div className="hidden overflow-x-auto sm:block">
         <table className="w-full min-w-[880px] table-fixed border-separate border-spacing-1 text-sm">
           <thead>
             <tr className="text-muted-foreground text-left">
@@ -63,41 +117,9 @@ export function RevisionsEditor({
             {revisions.map((revision, index) => (
               <tr key={index}>
                 {REVISION_FIELDS.map((column) => (
-                  <td key={column.key}>
-                    {isPersonColumn(column.key) ? (
-                      <NativeSelect
-                        aria-label={`${column.label} (row ${index + 1})`}
-                        value={revision[column.key]}
-                        onChange={(event) => setValue(index, column.key, event.target.value)}
-                      >
-                        <option value="">–</option>
-                        {personOptions(column.key, revision[column.key]).map((name) => (
-                          <option key={name} value={name}>
-                            {name}
-                          </option>
-                        ))}
-                      </NativeSelect>
-                    ) : (
-                      <Input
-                        aria-label={`${column.label} (row ${index + 1})`}
-                        type={column.type}
-                        value={revision[column.key]}
-                        onChange={(event) => setValue(index, column.key, event.target.value)}
-                      />
-                    )}
-                  </td>
+                  <td key={column.key}>{renderField(revision, index, column)}</td>
                 ))}
-                <td>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Remove revision ${revision.rev || index + 1}`}
-                    onClick={() => onChange(revisions.filter((_, i) => i !== index))}
-                  >
-                    <Trash2 />
-                  </Button>
-                </td>
+                <td>{removeButton(revision, index)}</td>
               </tr>
             ))}
           </tbody>

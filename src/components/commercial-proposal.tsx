@@ -29,6 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
+import { cn } from "@/lib/utils";
 import { FileDown, Loader2 } from "lucide-react";
 
 type CommercialProposalProps = {
@@ -39,22 +40,27 @@ type CommercialProposalProps = {
   error: string | null;
 };
 
-const TOWER_FIELDS: { key: keyof CommercialTower; label: string; type?: string; placeholder?: string }[] = [
-  { key: "equipment", label: "Equipment No." },
-  { key: "model", label: "Cooling Tower Model", placeholder: "e.g. ECF1212F4-1B-1" },
-  { key: "cells", label: "No. Of Cells" },
+/** Ordered so the half-width fields pair up in two columns on phones and three on desktop. */
+const TOWER_FIELDS: { key: keyof CommercialTower; label: string; placeholder?: string; wide?: boolean }[] = [
+  { key: "model", label: "Cooling Tower Model", placeholder: "e.g. ECF1212F4-1B-1", wide: true },
+  { key: "equipment", label: "Equipment No.", placeholder: "e.g. CT1 & CT2" },
+  { key: "cells", label: "No. Of Cells", placeholder: "e.g. 3" },
   { key: "arrangement", label: "Arrangement", placeholder: "e.g. In-Line" },
-  { key: "flowRate", label: "Design Flowrate", placeholder: "e.g. 73 (L/s)" },
-  { key: "hotTemperature", label: "Hot (Inlet) Water Temp", placeholder: "e.g. 35" },
-  { key: "coldTemperature", label: "Cold (Outlet) Water Temp", placeholder: "e.g. 29.5" },
+  { key: "driveType", label: "Type Of Drive", placeholder: "e.g. Belt" },
+  { key: "flowRate", label: "Design Flowrate", placeholder: "e.g. 73 (L/s)", wide: true },
+  { key: "hotTemperature", label: "Hot (Inlet) Temp", placeholder: "e.g. 35" },
+  { key: "coldTemperature", label: "Cold (Outlet) Temp", placeholder: "e.g. 29.5" },
   { key: "wetBulb", label: "Wet Bulb Temp", placeholder: "e.g. 23" },
-  { key: "material", label: "Material Of Construction" },
-  { key: "driveType", label: "Type Of Drive" },
-  { key: "motor", label: "Motor kW", placeholder: "e.g. 11" },
-  { key: "infill", label: "Type Of Infill" },
-  { key: "supportBase", label: "Mechanical Support Base", placeholder: "Same as material" },
+  { key: "material", label: "Material", placeholder: "e.g. SS316" },
+  { key: "motor", label: "Motor kW", placeholder: "e.g. 11", wide: true },
+  { key: "infill", label: "Type Of Infill", placeholder: "e.g. PVC Film Fill", wide: true },
+  { key: "supportBase", label: "Mech. Support Base", placeholder: "Same as material" },
   { key: "basin", label: "Cold Water Basin", placeholder: "Same as material" },
 ];
+
+// Tighter cards on phones, the usual spacing from sm up.
+const CARD = "gap-4 py-4 sm:gap-5 sm:py-5";
+const PAD = "px-4 sm:px-6";
 
 const OTHER_PORT = "__other";
 
@@ -108,17 +114,25 @@ export function CommercialProposal({
   const total = towers.reduce((sum, tower) => sum + (Number(towerTotal(tower)) || 0), 0);
 
   return (
-    <div className="grid min-w-0 grid-cols-1 gap-6" role="tabpanel" aria-label="Commercial Proposal">
-      <Card>
-        <CardHeader>
-          <CardTitle>Commercial Proposal Cover</CardTitle>
-          <CardDescription>These values are copied directly from the RFQ and Technical Proposal fields.</CardDescription>
+    <div className="grid min-w-0 grid-cols-1 gap-4 sm:gap-6" role="tabpanel" aria-label="Commercial Proposal">
+      <Card className={CARD}>
+        <CardHeader className={PAD}>
+          <CardTitle>Cover</CardTitle>
+          <CardDescription>Copied from the RFQ &amp; Technical Proposal tab.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-6">
-          <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Detail label="Project" value={title} />
-            <Detail label="Client" value={recipient} />
-            <div className="grid content-start gap-1.5">
+        <CardContent className={cn(PAD, "grid gap-5")}>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 lg:grid-cols-3">
+            <Detail label="Project" value={title} className="col-span-2 lg:col-span-1" />
+            <Detail label="Client" value={recipient} className="col-span-2 lg:col-span-1" />
+            <Detail
+              label="Project address"
+              value={data.projectAddress || "Project address from Documents form"}
+              className="col-span-2 lg:col-span-1"
+            />
+            <Detail label="TTA quote no." value={data.quoteNumber || "—"} />
+            <Detail label="Proposal date" value={formatDate(data.date)} />
+            <Detail label="Reference no." value={referenceNumber(data) || "From quote no. and date"} />
+            <div className="col-span-2 grid content-start gap-1.5">
               <Label htmlFor="commercial-attention">ATTN.</Label>
               <Input
                 id="commercial-attention"
@@ -127,17 +141,8 @@ export function CommercialProposal({
                 onChange={(event) => updateCommercialField("attention", event.target.value)}
               />
             </div>
-            <Detail label="Project address" value={data.projectAddress || "Project address from Documents form"} />
-            <Detail label="TTA quote number" value={data.quoteNumber || "Quote number from Documents form"} />
-            <Detail label="Reference number" value={referenceNumber(data) || "Generated from quote number and date"} />
-            <Detail label="Proposal date" value={formatDate(data.date)} />
-            <Detail label="Subject" value={title} />
           </div>
-          <RevisionsEditor
-            revisions={data.commercial.revisions}
-            onChange={(revisions) => updateCommercialField("revisions", revisions)}
-          />
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             {(["signature1", "signature2"] as const).map((key, index) => (
               <div key={key} className="grid content-start gap-1.5">
                 <Label htmlFor={`commercial-${key}`}>Signature {index + 1}</Label>
@@ -155,30 +160,29 @@ export function CommercialProposal({
               </div>
             ))}
           </div>
+          <RevisionsEditor
+            revisions={data.commercial.revisions}
+            onChange={(revisions) => updateCommercialField("revisions", revisions)}
+          />
         </CardContent>
       </Card>
 
-      <section className="grid gap-4" aria-labelledby="pricing-heading">
-        <div>
-          <h3 id="pricing-heading" className="text-lg font-semibold">Pricing Schedule</h3>
-          <p className="text-muted-foreground text-sm">
-            One pricing schedule per tower type. Add tower types with “Add New” on the Cooling Tower Specification.
+      <section className="grid gap-3 sm:gap-4" aria-labelledby="pricing-heading">
+        <div className="px-1">
+          <h3 id="pricing-heading" className="font-semibold sm:text-lg">Pricing Schedule</h3>
+          <p className="text-muted-foreground text-xs sm:text-sm">
+            One per tower type. Add tower types with “Add New” on the Cooling Tower Specification.
           </p>
         </div>
         {towers.map((tower, index) => (
-          <Card key={index}>
-            <CardHeader className="flex flex-wrap items-start justify-between gap-3">
-              <div className="grid gap-1.5">
-                <CardTitle>{tower.equipment || `Cooling tower ${index + 1}`}</CardTitle>
-                <CardDescription>Equipment details and material price (C&amp;F {tower.port || "…"} Port).</CardDescription>
-              </div>
-              <div className="grid min-w-40 gap-1.5">
-                <Label htmlFor={`commercial-tower-${index}-flow-type`}>
-                  Tower type
-                  {index === 0 && <span className="text-primary text-[10px] font-semibold">TECH PROP</span>}
-                </Label>
+          <Card key={index} className={CARD}>
+            <CardHeader className={cn(PAD, "flex items-center justify-between gap-3")}>
+              <CardTitle className="min-w-0 truncate">{tower.equipment || `Cooling tower ${index + 1}`}</CardTitle>
+              <div className="w-36 shrink-0">
                 <NativeSelect
                   id={`commercial-tower-${index}-flow-type`}
+                  aria-label="Tower type"
+                  title={index === 0 ? "Tower type – shared with the Technical Proposal" : "Tower type"}
                   value={tower.flowType}
                   onChange={(event) => {
                     const flowType = event.target.value as FlowType;
@@ -195,35 +199,40 @@ export function CommercialProposal({
                 </NativeSelect>
               </div>
             </CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="grid gap-4 border-b pb-4 sm:col-span-2 sm:grid-cols-3 lg:col-span-3">
-                <div className="grid content-start gap-1.5">
-                  <Label htmlFor={`commercial-tower-${index}-price`}>1.1 Price For Cooling Tower Material (AUD)</Label>
+            <CardContent className={cn(PAD, "grid gap-4")}>
+              <div className="bg-muted/40 grid grid-cols-2 gap-3 rounded-lg border p-3 sm:grid-cols-[minmax(0,2fr)_6rem_minmax(0,1.5fr)]">
+                <div className="col-span-2 grid content-start gap-1.5 sm:col-span-1">
+                  <Label htmlFor={`commercial-tower-${index}-price`}>1.1 Material price (AUD)</Label>
                   <Input
                     id={`commercial-tower-${index}-price`}
                     type="number"
+                    inputMode="decimal"
                     min="0"
                     step="0.01"
                     placeholder="e.g. 389449"
+                    className="bg-background"
                     value={tower.price}
                     onChange={(event) => setTowerField(index, "price", event.target.value)}
                   />
                 </div>
                 <div className="grid content-start gap-1.5">
-                  <Label htmlFor={`commercial-tower-${index}-quantity`}>Quantity</Label>
+                  <Label htmlFor={`commercial-tower-${index}-quantity`}>Qty</Label>
                   <Input
                     id={`commercial-tower-${index}-quantity`}
                     type="number"
+                    inputMode="numeric"
                     min="1"
                     step="1"
+                    className="bg-background"
                     value={tower.quantity}
                     onChange={(event) => setTowerField(index, "quantity", event.target.value)}
                   />
                 </div>
                 <div className="grid content-start gap-1.5">
-                  <Label htmlFor={`commercial-tower-${index}-port`}>C&amp;F Port (1.2 / 1.3)</Label>
+                  <Label htmlFor={`commercial-tower-${index}-port`}>C&amp;F Port</Label>
                   <NativeSelect
                     id={`commercial-tower-${index}-port`}
+                    className="bg-background"
                     value={(PORTS as readonly string[]).includes(tower.port) ? tower.port : OTHER_PORT}
                     onChange={(event) =>
                       setTowerField(index, "port", event.target.value === OTHER_PORT ? "" : event.target.value)
@@ -239,137 +248,128 @@ export function CommercialProposal({
                   {!(PORTS as readonly string[]).includes(tower.port) && (
                     <Input
                       aria-label="Other port"
-                      placeholder="Type the port name, e.g. Newcastle"
+                      placeholder="e.g. Newcastle"
+                      className="bg-background"
                       value={tower.port}
                       onChange={(event) => setTowerField(index, "port", event.target.value)}
                     />
                   )}
                 </div>
-                <p className="text-muted-foreground text-sm sm:col-span-3">
-                  1.2 &amp; 1.3 (price × quantity):{" "}
+                <p className="text-muted-foreground col-span-2 flex items-baseline justify-between gap-2 text-sm sm:col-span-3">
+                  1.2 &amp; 1.3 (price × qty)
                   <span className="text-foreground font-semibold">
                     {tower.price.trim() ? currency.format(Number(towerTotal(tower)) || 0) : "—"}
                   </span>
                 </p>
               </div>
-              {TOWER_FIELDS.map(({ key, label, type, placeholder }) => {
-                const copied = Boolean(sourceValue(index, key));
-                return (
-                  <div key={key} className="grid content-start gap-1.5">
-                    <Label htmlFor={`commercial-tower-${index}-${key}`}>
-                      {label}
-                      {copied && (
-                        <span className="text-primary text-[10px] font-semibold">
-                          {key === "model" ? "TECH PROP" : index === 0 ? "RFQ" : `SPEC ${index + 1}`}
-                        </span>
-                      )}
-                    </Label>
-                    <Input
-                      id={`commercial-tower-${index}-${key}`}
-                      placeholder={placeholder}
-                      type={type ?? "text"}
-                      min={type === "number" ? "0" : undefined}
-                      step={type === "number" ? "0.01" : undefined}
-                      value={tower[key]}
-                      readOnly={copied}
-                      title={copied ? "Copied from the RFQ / Technical Proposal – edit it there" : undefined}
-                      className={copied ? "bg-muted text-muted-foreground cursor-default" : undefined}
-                      onChange={(event) => setTowerField(index, key, event.target.value)}
-                    />
-                  </div>
-                );
-              })}
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+                {TOWER_FIELDS.map(({ key, label, placeholder, wide }) => {
+                  const copied = Boolean(sourceValue(index, key));
+                  return (
+                    <div
+                      key={key}
+                      className={cn("grid min-w-0 content-end gap-1.5", wide && "col-span-2 lg:col-span-1")}
+                    >
+                      <Label htmlFor={`commercial-tower-${index}-${key}`} className="text-xs sm:text-sm">
+                        {label}
+                        {copied && (
+                          <span className="text-primary text-[10px] font-semibold">
+                            {key === "model" ? "TECH PROP" : index === 0 ? "RFQ" : `SPEC ${index + 1}`}
+                          </span>
+                        )}
+                      </Label>
+                      <Input
+                        id={`commercial-tower-${index}-${key}`}
+                        placeholder={placeholder}
+                        value={tower[key]}
+                        readOnly={copied}
+                        title={copied ? "Copied from the RFQ / Technical Proposal – edit it there" : undefined}
+                        className={copied ? "bg-muted text-muted-foreground cursor-default" : undefined}
+                        onChange={(event) => setTowerField(index, key, event.target.value)}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </CardContent>
           </Card>
         ))}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-y-2 border-primary bg-primary/5 px-5 py-4">
-          <div>
-            <p className="font-semibold">Total lump sum · cooling tower materials</p>
-            <p className="text-muted-foreground text-sm">C&F Brisbane Port · GST excluded</p>
+        <div className="border-primary bg-primary/5 flex items-center justify-between gap-3 rounded-xl border-2 px-4 py-3 sm:px-5 sm:py-4">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold sm:text-base">Total lump sum</p>
+            <p className="text-muted-foreground text-xs sm:text-sm">
+              C&amp;F {towers[0]?.port || "…"} Port · GST excluded
+            </p>
           </div>
-          <p className="text-xl font-bold">{currency.format(total)}</p>
+          <p className="shrink-0 text-lg font-bold sm:text-xl">{currency.format(total)}</p>
         </div>
       </section>
 
-      <Card>
-        <CardHeader>
+      <Card className={CARD}>
+        <CardHeader className={PAD}>
           <CardTitle>Scope of Supply</CardTitle>
-          <CardDescription>
-            Items supplied by Truwater. The Optional and By Purchaser items stay in the document as they are.
-          </CardDescription>
+          <CardDescription>Items supplied by Truwater. Optional and By Purchaser items print as standard.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3">
-          <div className="grid gap-2 sm:grid-cols-2">
-            {data.commercial.scope.map((item, index) =>
-              item.responsibility === "Truwater" ? (
-                <Input
-                  key={index}
-                  aria-label={`Truwater scope item ${index + 1}`}
-                  value={item.description}
-                  onChange={(event) => setScopeField(index, "description", event.target.value)}
-                />
-              ) : null
-            )}
-          </div>
+        <CardContent className={cn(PAD, "grid gap-2 sm:grid-cols-2")}>
+          {data.commercial.scope.map((item, index) =>
+            item.responsibility === "Truwater" ? (
+              <Input
+                key={index}
+                aria-label={`Truwater scope item ${index + 1}`}
+                value={item.description}
+                onChange={(event) => setScopeField(index, "description", event.target.value)}
+              />
+            ) : null
+          )}
         </CardContent>
       </Card>
-      {/* Optional items (A spare parts, B supervision rates) are standard: printed from the defaults, not edited here. */}
+      {/* Optional items (A spare parts, B supervision rates), purchaser responsibilities, the delivery schedule
+          chart and the other terms of condition are standard: printed from the defaults, not edited here. */}
 
-      {/* Purchaser responsibilities and the delivery schedule chart are standard: printed from the defaults. */}
-      <Card className="gap-4 py-5">
-        <CardHeader>
-          <CardTitle>Delivery</CardTitle>
-          <CardDescription>Printed as “Delivery Time - …” under the delivery schedule.</CardDescription>
+      <Card className={CARD}>
+        <CardHeader className={PAD}>
+          <CardTitle>Delivery &amp; Price Basis</CardTitle>
+          <CardDescription>The other terms of condition are standard and print as they are.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-1.5 sm:max-w-sm">
-          <Label htmlFor="commercial-delivery-time">Delivery Time</Label>
-          <Input
-            id="commercial-delivery-time"
-            placeholder="e.g. 14- 16 Weeks"
-            value={data.commercial.deliveryTime}
-            onChange={(event) => updateCommercialField("deliveryTime", event.target.value)}
-          />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Commercial Terms</CardTitle>
-          <CardDescription>Price basis. The other terms of condition are standard and printed as they are.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div className="grid gap-4 sm:col-span-2 sm:grid-cols-[minmax(0,1fr)_10rem]">
-            <div className="grid content-start gap-1.5">
-              <Label htmlFor="commercial-delivery-site">Price Basis – Delivered To Site At</Label>
-              <Input
-                id="commercial-delivery-site"
-                placeholder={data.projectAddress || "e.g. Arthur Gorrie Correctional Centre, 3068 Ipswich Rd, Wacol QLD 4076"}
-                value={data.commercial.deliverySite}
-                onChange={(event) => updateCommercialField("deliverySite", event.target.value)}
-              />
-            </div>
-            <div className="grid content-start gap-1.5">
-              <Label htmlFor="commercial-containers">No. Of Containers</Label>
-              <Input
-                id="commercial-containers"
-                type="number"
-                min="1"
-                step="1"
-                value={data.commercial.containers}
-                onChange={(event) => updateCommercialField("containers", event.target.value)}
-              />
-            </div>
-            <p className="text-muted-foreground text-xs sm:col-span-2">
-              Blank site = the project address. The port follows tower 1&apos;s C&amp;F port (
-              {towers[0]?.port || "…"}).
-            </p>
+        <CardContent className={cn(PAD, "grid grid-cols-2 gap-3 sm:grid-cols-[minmax(0,1fr)_8rem_minmax(0,2fr)]")}>
+          <div className="grid content-start gap-1.5">
+            <Label htmlFor="commercial-delivery-time">Delivery Time</Label>
+            <Input
+              id="commercial-delivery-time"
+              placeholder="e.g. 14-16 Weeks"
+              value={data.commercial.deliveryTime}
+              onChange={(event) => updateCommercialField("deliveryTime", event.target.value)}
+            />
           </div>
-          {/* The other terms (inclusions, exclusions, validity, payment, warranty, liability) are standard. */}
+          <div className="grid content-start gap-1.5">
+            <Label htmlFor="commercial-containers">Containers</Label>
+            <Input
+              id="commercial-containers"
+              type="number"
+              inputMode="numeric"
+              min="1"
+              step="1"
+              value={data.commercial.containers}
+              onChange={(event) => updateCommercialField("containers", event.target.value)}
+            />
+          </div>
+          <div className="col-span-2 grid content-start gap-1.5 sm:col-span-1">
+            <Label htmlFor="commercial-delivery-site">Delivered To Site At</Label>
+            <Input
+              id="commercial-delivery-site"
+              placeholder={data.projectAddress || "Blank = the project address"}
+              value={data.commercial.deliverySite}
+              onChange={(event) => updateCommercialField("deliverySite", event.target.value)}
+            />
+          </div>
+          <p className="text-muted-foreground col-span-2 text-xs sm:col-span-3">
+            Blank site = the project address. The port follows tower 1&apos;s C&amp;F port ({towers[0]?.port || "…"}).
+          </p>
         </CardContent>
       </Card>
 
       {error && <p className="text-destructive text-sm" role="alert">{error}</p>}
-      <div className="flex flex-wrap justify-end gap-3">
+      <div className="grid gap-2 sm:flex sm:justify-end sm:gap-3 [&_button]:w-full sm:[&_button]:w-auto">
         <SaveToHistory data={data} kinds={["commercial"]} />
         <Button type="button" size="lg" disabled={generating} onClick={onGenerate}>
           {generating ? <Loader2 className="animate-spin" /> : <FileDown />}
@@ -380,11 +380,11 @@ export function CommercialProposal({
   );
 }
 
-function Detail({ label, value }: { label: string; value: string }) {
+function Detail({ label, value, className }: { label: string; value: string; className?: string }) {
   return (
-    <div className="min-w-0">
+    <div className={cn("min-w-0", className)}>
       <p className="text-muted-foreground text-xs font-medium">{label}</p>
-      <p className="mt-1 text-sm leading-relaxed">{value}</p>
+      <p className="mt-0.5 text-sm leading-snug break-words">{value}</p>
     </div>
   );
 }
