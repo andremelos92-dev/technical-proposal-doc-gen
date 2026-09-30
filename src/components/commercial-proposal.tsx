@@ -39,20 +39,24 @@ type CommercialProposalProps = {
   error: string | null;
 };
 
-/** Ordered so the half-width fields pair up in two columns on phones and three on desktop. */
+/**
+ * Same order as the equipment table in the Commercial Proposal document. `wide` fields take a full row
+ * on phones, which also keeps the half-width ones paired up.
+ */
 const TOWER_FIELDS: { key: keyof CommercialTower; label: string; placeholder?: string; wide?: boolean }[] = [
-  { key: "model", label: "Cooling Tower Model", placeholder: "e.g. ECF1212F4-1B-1", wide: true },
   { key: "equipment", label: "Equipment No.", placeholder: "e.g. CT1 & CT2" },
+  { key: "model", label: "Cooling Tower Model", placeholder: "e.g. ECF1212F4-1B-1" },
   { key: "cells", label: "No. Of Cells", placeholder: "e.g. 3" },
-  { key: "arrangement", label: "Arrangement", placeholder: "e.g. In-Line" },
-  { key: "driveType", label: "Type Of Drive", placeholder: "e.g. Belt" },
+  { key: "flowType", label: "Type" },
+  { key: "arrangement", label: "Arrangement", placeholder: "e.g. In-Line", wide: true },
   { key: "flowRate", label: "Design Flowrate", placeholder: "e.g. 73 (L/s)", wide: true },
   { key: "hotTemperature", label: "Hot (Inlet) Temp", placeholder: "e.g. 35" },
   { key: "coldTemperature", label: "Cold (Outlet) Temp", placeholder: "e.g. 29.5" },
   { key: "wetBulb", label: "Wet Bulb Temp", placeholder: "e.g. 23" },
-  { key: "material", label: "Material", placeholder: "e.g. SS316" },
+  { key: "material", label: "Material Of Construction", placeholder: "e.g. SS316" },
+  { key: "driveType", label: "Type Of Drive", placeholder: "e.g. Belt", wide: true },
   { key: "motor", label: "Motor kW", placeholder: "e.g. 11", wide: true },
-  { key: "infill", label: "Type Of Infill", placeholder: "e.g. PVC Film Fill", wide: true },
+  { key: "infill", label: "Type Of Infill", placeholder: "e.g. PVC Film Fill" },
   { key: "supportBase", label: "Mech. Support Base", placeholder: "Same as material" },
   { key: "basin", label: "Cold Water Basin", placeholder: "Same as material" },
 ];
@@ -87,7 +91,8 @@ export function CommercialProposal({
 
   // Where a field is filled in on the RFQ / Technical Proposal, if anywhere. Those fields are read-only here.
   const fieldSource = (index: number, key: keyof CommercialTower) => {
-    if (index === 0 && key === "model") return "Technical Proposal";
+    // Tower 1's model and type are the Technical Proposal cover's.
+    if (index === 0 && (key === "model" || key === "flowType")) return "Technical Proposal";
     if (!towerSpecKey(key)) return null;
     return index === 0 ? "RFQ" : `Specification ${index + 1}`;
   };
@@ -174,28 +179,8 @@ export function CommercialProposal({
         </div>
         {towers.map((tower, index) => (
           <Card key={index} className={CARD}>
-            <CardHeader className={cn(PAD, "flex items-center justify-between gap-3")}>
+            <CardHeader className={PAD}>
               <CardTitle className="min-w-0 truncate">{tower.equipment || `Cooling tower ${index + 1}`}</CardTitle>
-              <div className="w-36 shrink-0">
-                <NativeSelect
-                  id={`commercial-tower-${index}-flow-type`}
-                  aria-label="Tower type"
-                  title={index === 0 ? "Tower type – shared with the Technical Proposal" : "Tower type"}
-                  value={tower.flowType}
-                  onChange={(event) => {
-                    const flowType = event.target.value as FlowType;
-                    // Tower 1 shares its tower type with the Technical Proposal cover.
-                    if (index === 0) onChange({ flowType });
-                    else setTowerField(index, "flowType", flowType);
-                  }}
-                >
-                  {FLOW_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </NativeSelect>
-              </div>
             </CardHeader>
             <CardContent className={cn(PAD, "grid gap-4")}>
               <div className="bg-muted/40 grid grid-cols-2 gap-3 rounded-lg border p-3 sm:grid-cols-[minmax(0,2fr)_6rem_minmax(0,1.5fr)]">
@@ -272,16 +257,28 @@ export function CommercialProposal({
                         {label}
                         {source && (
                           <span className="text-primary text-[10px] font-semibold">
-                            {key === "model" ? "TECH PROP" : index === 0 ? "RFQ" : `SPEC ${index + 1}`}
+                            {key === "model" || key === "flowType" ? "TECH PROP" : index === 0 ? "RFQ" : `SPEC ${index + 1}`}
                           </span>
                         )}
                       </Label>
-                      {source ? (
+                      {key === "flowType" && !source ? (
+                        <NativeSelect
+                          id={`commercial-tower-${index}-${key}`}
+                          value={tower.flowType}
+                          onChange={(event) => setTowerField(index, "flowType", event.target.value as FlowType)}
+                        >
+                          {FLOW_TYPES.map((type) => (
+                            <option key={type} value={type}>
+                              {type}
+                            </option>
+                          ))}
+                        </NativeSelect>
+                      ) : source ? (
                         <Input
                           id={`commercial-tower-${index}-${key}`}
                           readOnly
                           tabIndex={-1}
-                          placeholder={`Fill in on the ${source}`}
+                          placeholder={`Fill in on ${source === "Technical Proposal" ? "Tech Prop" : source}`}
                           title={`From the ${source} – change it there`}
                           className="bg-muted cursor-default placeholder:italic focus-visible:ring-0"
                           value={tower[key]}
