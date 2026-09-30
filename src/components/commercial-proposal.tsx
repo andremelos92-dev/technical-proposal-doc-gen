@@ -114,8 +114,6 @@ export function CommercialProposal({
       )
     );
 
-  const total = towers.reduce((sum, tower) => sum + (Number(towerTotal(tower)) || 0), 0);
-
   return (
     <div className="grid min-w-0 grid-cols-1 gap-4 sm:gap-6" role="tabpanel" aria-label="Commercial Proposal">
       <Card className={CARD}>
@@ -303,15 +301,7 @@ export function CommercialProposal({
             </CardContent>
           </Card>
         ))}
-        <div className="border-primary bg-primary/5 flex items-center justify-between gap-3 rounded-xl border-2 px-4 py-3 sm:px-5 sm:py-4">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold sm:text-base">Total lump sum</p>
-            <p className="text-muted-foreground text-xs sm:text-sm">
-              C&amp;F {towers[0]?.port || "…"} Port · GST excluded
-            </p>
-          </div>
-          <p className="shrink-0 text-lg font-bold sm:text-xl">{currency.format(total)}</p>
-        </div>
+        {/* The total lump sum is only printed in the document. */}
       </section>
 
       <Card className={CARD}>
