@@ -9,8 +9,22 @@ import { HISTORY_KINDS, type HistoryKind } from "@/lib/history";
 import { getSavedPassword, historyApi, savePassword, WrongPasswordError } from "@/lib/history-client";
 import type { ProposalData } from "@/lib/proposal";
 
+// Saving to History is switched off while the tool is being tested; set to true to turn it back on.
+const SAVING_ENABLED = false;
+
+type SaveToHistoryProps = { data: ProposalData; kinds: HistoryKind[] };
+
+export function SaveToHistory(props: SaveToHistoryProps) {
+  if (SAVING_ENABLED) return <SaveToHistoryControls {...props} />;
+  return (
+    <Button type="button" variant="outline" size="lg" disabled title="Saving to History is coming soon">
+      <Save /> Save · Coming soon
+    </Button>
+  );
+}
+
 /** Saves the whole form to History under one of the given tabs. */
-export function SaveToHistory({ data, kinds }: { data: ProposalData; kinds: HistoryKind[] }) {
+function SaveToHistoryControls({ data, kinds }: SaveToHistoryProps) {
   const [kind, setKind] = useState<HistoryKind>(kinds[0]);
   const [state, setState] = useState<"idle" | "saving" | "saved">("idle");
   const [error, setError] = useState<string | null>(null);
