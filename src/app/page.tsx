@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, FileSpreadsheet, FileText, History } from "lucide-react";
+import { ArrowRight, Construction, FileSpreadsheet, FileText, History } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -24,6 +24,13 @@ export default function DashboardPage() {
         <p className="text-muted-foreground mt-2">
           Welcome to the Truwater Document Generator. Start a new document or pick up a previous one.
         </p>
+        <div className="mt-4 flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
+          <Construction className="mt-0.5 size-4 shrink-0" />
+          <p>
+            <span className="font-semibold">In development:</span> this tool is still being tested. Please review
+            every generated document before sending it, and report any issues you find.
+          </p>
+        </div>
       </header>
 
       <section className="grid gap-4 sm:grid-cols-2">
