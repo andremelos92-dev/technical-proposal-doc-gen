@@ -1,18 +1,26 @@
 import Link from "next/link";
-import { ArrowRight, Construction, FileSpreadsheet, FileText, History } from "lucide-react";
+import { ArrowRight, Construction, FileSpreadsheet, FileText, History, Receipt } from "lucide-react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const QUICK_ACTIONS = [
   {
     title: "RFQ",
-    description: "Quotation Project Summary for the engineers: project details and tower specification.",
+    description: "Project summary and tower specification for the engineers.",
     icon: FileSpreadsheet,
+    href: "/documents",
   },
   {
     title: "Technical Proposal",
-    description: "Cover page addressed to the customer or a regional partner, with revision table.",
+    description: "Cover page for the customer or regional partner.",
     icon: FileText,
+    href: "/documents",
+  },
+  {
+    title: "Commercial Proposal",
+    description: "Pricing, terms and conditions for each tower.",
+    icon: Receipt,
+    href: "/documents?tab=commercial",
   },
 ];
 
@@ -33,24 +41,24 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <section className="grid gap-4 sm:grid-cols-2">
-        {QUICK_ACTIONS.map(({ title, description, icon: Icon }) => (
-          <Link key={title} href="/documents" className="group">
-            <Card className="h-full transition-colors group-hover:border-primary/50 group-hover:shadow-md">
-              <CardHeader className="grid-cols-[auto_1fr] items-center gap-x-4">
-                <div className="bg-primary/10 text-primary row-span-2 flex size-11 items-center justify-center rounded-lg">
-                  <Icon className="size-5" />
-                </div>
-                <CardTitle>New {title}</CardTitle>
-                <CardDescription>{description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <span className="text-primary inline-flex items-center gap-1 text-sm font-medium">
-                  Open form
-                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-                </span>
-              </CardContent>
-            </Card>
+      <section className="grid gap-4 md:grid-cols-3">
+        {QUICK_ACTIONS.map(({ title, description, icon: Icon, href }) => (
+          <Link
+            key={title}
+            href={href}
+            className="group bg-card hover:border-primary/50 flex flex-col gap-3 rounded-xl border p-5 shadow-sm transition-all hover:shadow-md"
+          >
+            <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">
+              <Icon className="size-5" />
+            </div>
+            <div className="flex-1">
+              <h2 className="font-semibold">{title}</h2>
+              <p className="text-muted-foreground mt-1 text-sm">{description}</p>
+            </div>
+            <span className="text-primary inline-flex items-center gap-1 text-sm font-medium">
+              Start new
+              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+            </span>
           </Link>
         ))}
       </section>

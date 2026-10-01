@@ -83,6 +83,8 @@ export function ProposalForm() {
 
   // An entry loaded on the History page arrives here once, then is cleared.
   useEffect(() => {
+    // The dashboard links straight to the Commercial tab with ?tab=commercial.
+    if (new URLSearchParams(window.location.search).get("tab") === "commercial") setActiveTab("commercial");
     try {
       const stored = sessionStorage.getItem(LOAD_KEY);
       if (!stored) return;
