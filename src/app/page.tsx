@@ -14,7 +14,7 @@ const QUICK_ACTIONS = [
     title: "Technical Proposal",
     description: "Cover page for the customer or regional partner.",
     icon: FileText,
-    href: "/documents?tab=proposal",
+    href: "/documents",
   },
   {
     title: "Commercial Proposal",

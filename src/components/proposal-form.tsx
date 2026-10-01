@@ -25,7 +25,7 @@ import {
   type Recipient,
   type SpecKey,
 } from "@/lib/proposal";
-import { HISTORY_KINDS, isHistoryKind, LOAD_KEY, restoreProposal, type HistoryKind } from "@/lib/history";
+import { LOAD_KEY, restoreProposal } from "@/lib/history";
 import { DOCUMENTS, generateDocument, type DocumentKind } from "@/lib/templates";
 import { cn } from "@/lib/utils";
 
@@ -77,22 +77,21 @@ const CONTACT_ROWS: {
 
 export function ProposalForm() {
   const [data, setData] = useState<ProposalData>(createInitialProposal);
-  const [activeTab, setActiveTab] = useState<HistoryKind>("rfq");
+  const [activeTab, setActiveTab] = useState<"documents" | "commercial">("documents");
   const [generating, setGenerating] = useState<DocumentKind | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // An entry loaded on the History page arrives here once, then is cleared.
   useEffect(() => {
-    // The dashboard links straight to a tab with ?tab=proposal or ?tab=commercial.
-    const tab = new URLSearchParams(window.location.search).get("tab");
-    if (isHistoryKind(tab)) setActiveTab(tab);
+    // The dashboard links straight to the Commercial tab with ?tab=commercial.
+    if (new URLSearchParams(window.location.search).get("tab") === "commercial") setActiveTab("commercial");
     try {
       const stored = sessionStorage.getItem(LOAD_KEY);
       if (!stored) return;
       sessionStorage.removeItem(LOAD_KEY);
       const { kind, data: saved } = JSON.parse(stored);
       setData(restoreProposal(saved));
-      if (isHistoryKind(kind)) setActiveTab(kind);
+      if (kind === "commercial") setActiveTab("commercial");
     } catch {
       // Ignore a malformed hand-over; the form simply starts empty.
     }
@@ -129,7 +128,7 @@ export function ProposalForm() {
   async function handleGenerate(kind: DocumentKind) {
     // The tower type starts blank so it's always chosen on purpose.
     if (kind !== "rfq" && !data.flowType) {
-      setError("Select the Tower Type (Counterflow or Crossflow) on the Technical Proposal tab first.");
+      setError("Select the Tower Type (Counterflow or Crossflow) on the RFQ & Technical Proposal tab first.");
       return;
     }
     const untyped = kind === "commercial" ? data.commercial.towers.findIndex((t, i) => i > 0 && !t.flowType) : -1;
@@ -153,29 +152,40 @@ export function ProposalForm() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
-    await handleGenerate((submitter?.value ?? activeTab) as DocumentKind);
+    await handleGenerate((submitter?.value ?? "rfq") as DocumentKind);
   }
 
   return (
     <div className="grid gap-6">
       <div className="flex border-b" role="tablist" aria-label="Document sections">
-        {HISTORY_KINDS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            aria-selected={activeTab === tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              "min-w-0 flex-1 whitespace-normal border-b-2 px-2 py-3 text-center text-sm font-medium transition-colors sm:px-4",
-              activeTab === tab.id
-                ? "border-primary text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "documents"}
+          onClick={() => setActiveTab("documents")}
+          className={cn(
+            "min-w-0 flex-1 whitespace-normal border-b-2 px-2 py-3 text-center text-sm font-medium transition-colors sm:px-4",
+            activeTab === "documents"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
+        >
+          RFQ &amp; Technical Proposal
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "commercial"}
+          onClick={() => setActiveTab("commercial")}
+          className={cn(
+            "min-w-0 flex-1 whitespace-normal border-b-2 px-2 py-3 text-center text-sm font-medium transition-colors sm:px-4",
+            activeTab === "commercial"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Commercial Proposal
+        </button>
       </div>
 
       {activeTab === "commercial" ? (
@@ -188,12 +198,10 @@ export function ProposalForm() {
         />
       ) : (
       <form onSubmit={handleSubmit} className="grid gap-6">
-      {activeTab === "rfq" && (
-      <>
       <Card>
         <CardHeader>
           <CardTitle>Project Details</CardTitle>
-          <CardDescription>Shared with the Technical Proposal and Commercial Proposal tabs.</CardDescription>
+          <CardDescription>Used by both the RFQ and the Technical Proposal.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-5">
           <div className="grid gap-3 sm:grid-cols-12">
@@ -404,22 +412,6 @@ export function ProposalForm() {
           ))}
         </CardContent>
       </Card>
-      </>
-      )}
-
-      {activeTab === "proposal" && (
-      <>
-      <Card className="gap-4 py-5">
-        <CardHeader>
-          <CardTitle>Project</CardTitle>
-          <CardDescription>Shared with the RFQ tab.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-12">
-          {field("quoteNumber", "TTA Quote Number", { required: true, placeholder: "TTA0149" }, "sm:col-span-3")}
-          {field("projectName", "Project Name", { required: true, placeholder: "275 Kent St" }, "sm:col-span-4")}
-          {field("customerDetail", "Customer Detail", { placeholder: "Climatech NSW Pty Ltd" }, "sm:col-span-5")}
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader>
@@ -506,8 +498,6 @@ export function ProposalForm() {
           />
         </CardContent>
       </Card>
-      </>
-      )}
 
       {error && <p className="text-destructive text-sm">{error}</p>}
 
@@ -515,11 +505,13 @@ export function ProposalForm() {
         <Button type="button" variant="outline" onClick={() => setData(createInitialProposal())}>
           <RotateCcw /> Reset
         </Button>
-        <SaveToHistory key={activeTab} data={data} kinds={[activeTab]} />
-        <Button type="submit" value={activeTab} size="lg" disabled={!!generating}>
-          {generating === activeTab ? <Loader2 className="animate-spin" /> : <FileDown />}
-          Generate {DOCUMENTS[activeTab as keyof typeof DOCUMENTS].label}
-        </Button>
+        <SaveToHistory data={data} kinds={["rfq", "proposal"]} />
+        {(Object.keys(DOCUMENTS) as (keyof typeof DOCUMENTS)[]).map((kind) => (
+          <Button key={kind} type="submit" value={kind} size="lg" disabled={!!generating}>
+            {generating === kind ? <Loader2 className="animate-spin" /> : <FileDown />}
+            {DOCUMENTS[kind].label}
+          </Button>
+        ))}
       </div>
       </form>
       )}
